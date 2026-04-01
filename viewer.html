@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>角色动画序列展示页 (Animation Viewer)</title>
+    <style>
+        body {
+            margin: 0; padding: 40px;
+            background: #1e1e24; color: #fff;
+            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        h1 {
+            color: #a8e6cf;
+            margin-bottom: 5px;
+        }
+        p {
+            color: #bbbbbb;
+            margin-bottom: 40px;
+        }
+        .container {
+            display: flex; gap: 40px; 
+            background: #2b2b36; padding: 40px 60px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .card {
+            display: flex; flex-direction: column; align-items: center;
+            background: #363644;
+            padding: 20px;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .canvas-wrap {
+            width: 140px; height: 240px; 
+            background: repeating-conic-gradient(#80808033 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+            border-radius: 8px;
+            display: flex; justify-content: center; align-items: flex-end;
+            padding-bottom: 10px;
+            border: 2px solid #5c5470;
+        }
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated; /* 完美保留边缘 */
+        }
+        h2 { font-size: 16px; margin-top: 20px; color: #ffb0b5; margin-bottom: 0;}
+        .dims { font-size: 12px; color: #888; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🏃‍♂️ 主角动态序列独立画廊</h1>
+    <p>四向独立像素帧·裸载渲染脱机预览板 (FrameRate ≅ 6 FPS)</p>
+    
+    <div class="container">
+        <!-- Up -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <!-- Scale width by roughly 0.45 just for visual alignment -->
+                <canvas id="cvs-up" width="231" height="394" style="width: 104px; height: 177px;"></canvas>
+            </div>
+            <h2>背面 (Up)</h2>
+            <div class="dims">231 x 394</div>
+        </div>
+
+        <!-- Down -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-down" width="266" height="431" style="width: 120px; height: 194px;"></canvas>
+            </div>
+            <h2>正面 (Down)</h2>
+            <div class="dims">266 x 431</div>
+        </div>
+
+        <!-- Left -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-left" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
+            </div>
+            <h2>左转 (Left)</h2>
+            <div class="dims">251 x 446</div>
+        </div>
+
+        <!-- Right -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-right" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
+            </div>
+            <h2>右转 (Right)</h2>
+            <div class="dims">251 x 446</div>
+        </div>
+    </div>
+
+    <h1 style="margin-top: 60px;">👩‍🌾 高清交互动作储备 (Tool Actions)</h1>
+    <p>剥离至脱机库保存的劳作帧集</p>
+
+    <div class="container">
+        <!-- Hoe -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-hoe" width="148" height="241" style="width: 110px; height: 180px;"></canvas>
+            </div>
+            <h2>耕地 (Hoeing)</h2>
+            <div class="dims">148 x 241</div>
+        </div>
+
+        <!-- Water -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-water" width="138" height="193" style="width: 110px; height: 154px;"></canvas>
+            </div>
+            <h2>浇水 (Watering)</h2>
+            <div class="dims">138 x 193</div>
+        </div>
+
+        <!-- Seed -->
+        <div class="card">
+            <div class="canvas-wrap">
+                <canvas id="cvs-seed" width="150" height="250" style="width: 110px; height: 183px;"></canvas>
+            </div>
+            <h2>播种 (Seeding - Single Frame)</h2>
+            <div class="dims">静止原画</div>
+        </div>
+    </div>
+
+    <!-- Frame Rendering Core Script -->
+    <script>
+        const FPS = 6;
+        const frameInterval = 1000 / FPS;
+
+        /**
+         * @param canvasId 绑定的 Canvas节点
+         * @param imgSrc 图集路径
+         * @param frames 总帧数
+         * @param fWidth 每帧宽
+         * @param fHeight 每帧高
+         */
+        function attachSprite(canvasId, imgSrc, frames, fWidth, fHeight) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.src = imgSrc;
+
+            let currentFrame = 0;
+            let lastUpdate = performance.now();
+
+            img.onload = () => {
+                function render(time) {
+                    if (time - lastUpdate > frameInterval) {
+                        currentFrame = (currentFrame + 1) % frames;
+                        lastUpdate = time;
+                        
+                        ctx.clearRect(0, 0, fWidth, fHeight);
+                        // canvas crop params: source(x,y,w,h) -> dest(x,y,w,h)
+                        ctx.drawImage(img, currentFrame * fWidth, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
+                    }
+                    requestAnimationFrame(render);
+                }
+                requestAnimationFrame(render);
+            };
+        }
+
+        // 初始化播放这 4 组完全不同尺寸切割出来的帧序列
+        attachSprite('cvs-up', '/asset/player_walk_up.png', 4, 231, 394);
+        attachSprite('cvs-down', '/asset/player_walk_down.png', 4, 266, 431);
+        attachSprite('cvs-left', '/asset/player_walk_left.png', 4, 251, 446);
+        attachSprite('cvs-right', '/asset/player_walk_right.png', 4, 251, 446);
+
+        // 初始化播放这套原始生存的工具与交互动画库
+        attachSprite('cvs-hoe', '/player_hoe_sheet_v3.png', 4, 148, 241);
+        attachSprite('cvs-water', '/player_water_sheet.png', 4, 138, 193);
+
+        const seedCvs = document.getElementById('cvs-seed');
+        const seedCtx = seedCvs.getContext('2d');
+        const seedImg = new Image();
+        seedImg.src = '/player_hd_seed.png';
+        seedImg.onload = () => {
+            // Draw properly centered bounding the image
+            const sw = seedImg.width;
+            const sh = seedImg.height;
+            const targetW = 150;
+            const targetH = 250;
+            // keep aspect ratio
+            const scale = Math.min(targetW / sw, targetH / sh);
+            const w = sw * scale;
+            const h = sh * scale;
+            const dx = (targetW - w) / 2;
+            const dy = targetH - h; // bottom align
+            
+            seedCtx.drawImage(seedImg, 0, 0, sw, sh, dx, dy, w, h);
+        };
+    </script>
+</body>
+</html>

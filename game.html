@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>心屿 (Heart Island) - 地图与移动</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f7f9fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: monospace;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 4px solid #fff;
+        }
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            background-color: #a8e6cf;
+            display: block;
+        }
+        #hint {
+            position: absolute;
+            bottom: 20px;
+            color: #5c5470;
+            background: rgba(255,255,255,0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- 基础分辨率 320x240 -->
+        <canvas id="gameCanvas" width="320" height="240"></canvas>
+    </div>
+    <div id="hint">使用 WASD 控制角色移动（已包含边缘碰撞与视口跟随）</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        
+        // 放大倍数
+        const SCALE = 3;
+        canvas.style.width = (canvas.width * SCALE) + 'px';
+        canvas.style.height = (canvas.height * SCALE) + 'px';
+
+        /** --------------------------------------------------
+         *  0. 调色板与精灵数据 
+         *  -------------------------------------------------- */
+        const PALETTE = {
+            ' ': 'transparent', 
+            '0': '#000000',     
+            '1': '#a8e6cf', '2': '#91d2bc', 'g': '#dcebc8', // 草地
+            '3': '#ffd3b6', '4': '#e0b599', 't': '#cc9977', 'w': '#a57a5e', // 泥土与耕地
+            '5': '#a2d5f2', '6': '#80bce0',                 // 水体
+            '7': '#ffb0b5', '8': '#f4949a', '9': '#8B5A2B', // 樱花树
+            'a': '#ffe2e2', 'b': '#d35d6e', 'c': '#5c5470', 'd': '#f9f6f7', 'e': '#ffc3a0', // 角色
+            'h': '#bbbbbb', 'i': '#888888', 's': '#77dd77', 'v': '#ff9900' // 工具与作物
+        };
+
+        const SPRITES_DATA = {
+            'grass': [
+                "1111111111111111", "11111g1111111111", "11g2211111111111", "1121111111111221",
+                "1111111111g12111", "1111111111111111", "1111111111111111", "1111111111111g11",
+                "111g122111111111", "1111211111111111", "1111111111111111", "1111111g11111111",
+                "111111111122g111", "1111111112111111", "1111111111111111", "1111111111111111"
+            ],
+            'flower': [
+                "1111111111111111", "1177111111111111", "17d7711g11111111", "1177111111111221",
+                "1111111111g12111", "1111111111111111", "1111g11111771111", "1111111117d77111",
+                "111g122111771111", "1111211111111111", "111111e111111111", "1111eee1g1111111",
+                "11111e111122g111", "111111e112111111", "1111111111111111", "1111111111111111"
+            ],
+            'dirt': [
+                "3333333333333333", "3333433333333333", "3334333333333333", "3333333333333443",
+                "3333333333334333", "3333333333333333", "3333333333333333", "3333333334333333",
+                "3333344333333333", "3333433333333333", "3333333333333333", "3333333333333333",
+                "3333333333443333", "3333333334333333", "3333333333333333", "3333333333333333"
+            ],
+            'water': [
+                "5555555555555555", "55555d5555555555", "555666555555d555", "5555555555555555",
+                "5555555555556665", "55555d5555555555", "5555555555555555", "55555555666d5555",
+                "5555555555555555", "5555555555555555", "5556665d55555555", "5555555555555555",
+                "5555555555555555", "5555d55555555555", "5555555555666d55", "5555555555555555"
+            ],
+            'treeTop': [
+                "    88877888    ", "   8877d77788   ", "  888777777888  ", "  888877778888  ",
+                " 88888888888888 ", "  888888888888  ", "   8888888888   ", "    88888888    ",
+                "      9999      ", "      9999      ", "      9999      ", "      9999      ",
+                "      9999      ", "      9999      ", "      9999      ", "      9999      "
+            ],
+            // 四向角色动画
+            'player_down': [
+                "                ", "      b00b      ", "     0bbbb0     ", "     0aada0     ",
+                "    0a0aa0a0    ", "    0a0000a0    ", "     0aaaa0     ", "     0bbbb0     ",
+                "    0ebbbbe0    ", "    0cbbbbc0    ", "      0cc0      ", "     0cccc0     ",
+                "     0c00c0     ", "     0c  c0     ", "                ", "                "
+            ],
+            'player_up': [
+                "                ", "      b00b      ", "     0bbbb0     ", "     0aaaa0     ",
+                "    0a0aa0a0    ", "    0a0000a0    ", "     0abaa0     ", "     0bbbb0     ",
+                "    0ebbbbe0    ", "    0cbbbbc0    ", "      0cc0      ", "     0c00c0     ",
+                "     0c00c0     ", "     0c  c0     ", "                ", "                "
+            ],
+            'player_left': [
+                "                ", "      b00b      ", "     0bbbb0     ", "    0aaada0     ",
+                "   0aa0aa0a0    ", "   0aa0000a0    ", "    0aaaaa0     ", "    0ebbbb0     ",
+                "    0ebbbb0     ", "    0cbbbb0     ", "     00cc0      ", "    00ccc0      ",
+                "    0000c0      ", "    00   0      ", "                ", "                "
+            ],
+            'player_right': [
+                "                ", "      b00b      ", "     0bbbb0     ", "     0adaaa0    ",
+                "    0a0aa0aa0   ", "    0a0000aa0   ", "     0aaaaa0    ", "     0bbbbe0    ",
+                "     0bbbbe0    ", "     0bbbbc0    ", "      0cc00     ", "      0ccc00    ",
+                "      0c0000    ", "      0   00    ", "                ", "                "
+            ],
+            // 耕地与作物
+            'tilled': ["tttttttttttttttt","twwwwwwwwwwwwwwt","twttttttttttttwt","twtwwwwwwwwwwtwt","twtwttttttttwtwt","twtwtwwwwwwtwtwt","twtwtwttttwtwtwt","twtwtwtwwtwtwtwt","twtwtwtwwtwtwtwt","twtwtwttttwtwtwt","twtwtwwwwwwtwtwt","twtwttttttttwtwt","twtwwwwwwwwwwtwt","twttttttttttttwt","twwwwwwwwwwwwwwt","tttttttttttttttt"],
+            'watered': ["wwwwwwwwwwwwwwww","w00000000000000w","w0wwwwwwwwwwww0w","w0w0000000000w0w","w0w0wwwwwwww0w0w","w0w0w000000w0w0w","w0w0w0wwww0w0w0w","w0w0w0w00w0w0w0w","w0w0w0w00w0w0w0w","w0w0w0wwww0w0w0w","w0w0w000000w0w0w","w0w0wwwwwwww0w0w","w0w0000000000w0w","w0wwwwwwwwwwww0w","w00000000000000w","wwwwwwwwwwwwwwww"],
+            'seeds': ["                ","                ","                ","                ","                ","                ","                ","                ","      ss        ","      ss        ","                ","      ss        ","      ss        ","                ","                ","                "],
+            'sprout': ["                ","                ","                ","                ","                ","       s        ","      sss       ","      sss       ","      sss       ","      sss       ","       s        ","       s        ","       s        ","                ","                ","                "],
+            'mature': ["                ","                ","       s        ","      s s       ","       s        ","       s        ","     vvvvv      ","    vvvvvvv     ","    vvvvvvv     ","     vvvvv      ","      vvv       ","       v        ","                ","                ","                ","                "],
+            // UI 图标
+            'icon_hoe': ["  0hhhhh        ","  0hhhhh        ","   0hh0         ","    0i0         ","    0i0         ","    0i0         ","    0i0         ","    0i0         ","    0i0         ","    0i0         ","     0          ","                ","                ","                ","                ","                "],
+            'icon_seed': ["                ","   00000        ","  0dddd00       ","  0ddddd0       "," 0ddddddd0      "," 0ddddddd0      "," 0ddddddd0      "," 0d0ddd0d0      "," 0ddddddd0      ","  0ddddd0       ","   00000        ","                ","                ","                ","                ","                "],
+            'icon_water': ["                ","                ","    0i0         ","    0i0   00    ","    000  050    ","  0005000050    "," 0555555550     "," 0555555550     "," 0555555550     "," 0555555550     "," 0555555550     ","  00000000      ","                ","                ","                ","                "]
+        };
+
+        const spriteCanvases = {};
+
+        function bakeSprites() {
+            for (const [key, spriteLines] of Object.entries(SPRITES_DATA)) {
+                const off = document.createElement('canvas');
+                off.width = 16;
+                off.height = 16;
+                const octx = off.getContext('2d');
+                for (let y = 0; y < 16; y++) {
+                    const line = spriteLines[y];
+                    for (let x = 0; x < 16; x++) {
+                        const char = line[x];
+                        if (char !== ' ') {
+                            octx.fillStyle = PALETTE[char] || '#ff00ff';
+                            octx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+                spriteCanvases[key] = off;
+            }
+        }
+        bakeSprites();
+
+        /** --------------------------------------------------
+         *  1. 地图生成 (40 x 30)
+         *  -------------------------------------------------- */
+        const TILE_SIZE = 32;
+        const MAP_COLS = 40;
+        const MAP_ROWS = 30;
+        const MAP_WIDTH = MAP_COLS * TILE_SIZE;
+        const MAP_HEIGHT = MAP_ROWS * TILE_SIZE;
+        const MAP = [];
+        
+        let gameTime = 6 * 60; // 游戏时间，一天从早晨 6:00 (360) 开始
+        let currentTool = 1; // 1: 锄头, 2: 种子, 3: 水壶
+        
+        // 农田状态: key='x,y', val={ state: 'tilled'|'watered', crop: 0-3 }
+        const farmStates = {};
+
+        // 简易程序化生成 40x30 地图
+        for (let y = 0; y < MAP_ROWS; y++) {
+            const row = [];
+            for (let x = 0; x < MAP_COLS; x++) {
+                // 边界水域
+                if (x === 0 || x === MAP_COLS - 1 || y === 0 || y === MAP_ROWS - 1) {
+                    row.push(3); // water
+                } else if (y === 1) {
+                    row.push(4); // 边缘树林用来挡视野
+                } else {
+                    const rx = Math.random();
+                    if (rx < 0.08) row.push(4);             // 树木
+                    else if (rx < 0.15) row.push(1);        // 小花
+                    else if (x > 15 && x < 25 && y > 15 && y < 20) row.push(2); // 中心附近的泥地农田
+                    else row.push(0);                       // 草地
+                }
+            }
+            MAP.push(row);
+        }
+
+        // 碰撞判断辅助：定义哪些瓦片无法通过 (3=水, 4=树)
+        function isSolid(tx, ty) {
+            if (tx < 0 || tx >= MAP_COLS || ty < 0 || ty >= MAP_ROWS) return true;
+            return MAP[ty][tx] === 3 || MAP[ty][tx] === 4;
+        }
+
+        /** --------------------------------------------------
+         *  2. 角色逻辑
+         *  -------------------------------------------------- */
+        const player = {
+            x: 20 * TILE_SIZE, // 初始位置位于地图中心
+            y: 15 * TILE_SIZE,
+            width: 16,         // 物理碰撞箱宽度 (比渲染的32像素小，方便在树林间走位)
+            height: 12,        // 物理碰撞箱高度 (主要判定脚部)
+            speed: 120,        // 像素/秒
+            dir: 'down',
+            moving: false
+        };
+
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if(e.key === '1') currentTool = 1;
+            if(e.key === '2') currentTool = 2;
+            if(e.key === '3') currentTool = 3;
+            if(e.key === ' ') handleInteract();
+        });
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        function handleInteract() {
+            let tx = Math.floor(player.x / TILE_SIZE);
+            let ty = Math.floor(player.y / TILE_SIZE);
+            if (player.dir === 'up') ty -= 1;
+            else if (player.dir === 'down') ty += 1;
+            else if (player.dir === 'left') tx -= 1;
+            else if (player.dir === 'right') tx += 1;
+
+            if (tx < 0 || tx >= MAP_COLS || ty < 0 || ty >= MAP_ROWS) return;
+            if (MAP[ty][tx] !== 2) return; // 必须是泥土地
+
+            const key = `${tx},${ty}`;
+            let farm = farmStates[key] || { state: 'normal', crop: 0 };
+
+            if (currentTool === 1 && farm.state === 'normal') {
+                farm.state = 'tilled';
+            } else if (currentTool === 2 && (farm.state === 'tilled' || farm.state === 'watered') && farm.crop === 0) {
+                farm.crop = 1; // 种下种子
+            } else if (currentTool === 3 && farm.state === 'tilled') {
+                farm.state = 'watered';
+            }
+
+            if (farm.state !== 'normal' || farm.crop !== 0) farmStates[key] = farm;
+        }
+
+        function updatePlayer(dt) {
+            let dx = 0, dy = 0;
+
+            if (keys['w'] || keys['arrowup'])    { dy -= 1; player.dir = 'up'; }
+            if (keys['s'] || keys['arrowdown'])  { dy += 1; player.dir = 'down'; }
+            if (keys['a'] || keys['arrowleft'])  { dx -= 1; player.dir = 'left'; }
+            if (keys['d'] || keys['arrowright']) { dx += 1; player.dir = 'right'; }
+
+            // 归一化对角线运动，保证速度一致
+            if (dx !== 0 && dy !== 0) {
+                const len = Math.sqrt(dx*dx + dy*dy);
+                dx /= len;
+                dy /= len;
+            }
+
+            player.moving = (dx !== 0 || dy !== 0);
+
+            if (player.moving) {
+                // 计算新的意图位置
+                const nextX = player.x + dx * player.speed * dt;
+                const nextY = player.y + dy * player.speed * dt;
+
+                // 物理判定脚下中心点附近的碰撞 (用 AABB 去判断所在的 4 个角的瓦片是否 Solid)
+                // 这是一种比较宽松和顺滑的碰撞检测方法，允许滑墙
+                
+                // 1. 横向碰撞
+                const testLeft = (nextX - player.width / 2) / TILE_SIZE;
+                const testRight = (nextX + player.width / 2) / TILE_SIZE;
+                const top = (player.y - player.height) / TILE_SIZE;
+                const bottom = (player.y) / TILE_SIZE;
+
+                if (!isSolid(Math.floor(testLeft), Math.floor(top)) &&
+                    !isSolid(Math.floor(testRight), Math.floor(top)) &&
+                    !isSolid(Math.floor(testLeft), Math.floor(bottom)) &&
+                    !isSolid(Math.floor(testRight), Math.floor(bottom))) {
+                    player.x = nextX;
+                }
+
+                // 2. 纵向碰撞
+                const left = (player.x - player.width / 2) / TILE_SIZE;
+                const right = (player.x + player.width / 2) / TILE_SIZE;
+                const testTop = (nextY - player.height) / TILE_SIZE;
+                const testBottom = (nextY) / TILE_SIZE;
+
+                if (!isSolid(Math.floor(left), Math.floor(testTop)) &&
+                    !isSolid(Math.floor(right), Math.floor(testTop)) &&
+                    !isSolid(Math.floor(left), Math.floor(testBottom)) &&
+                    !isSolid(Math.floor(right), Math.floor(testBottom))) {
+                    player.y = nextY;
+                }
+                
+                // 限制在地图物理边界内
+                player.x = Math.max(player.width/2, Math.min(MAP_WIDTH - player.width/2, player.x));
+                player.y = Math.max(player.height, Math.min(MAP_HEIGHT, player.y));
+            }
+        }
+
+        /** --------------------------------------------------
+         *  3. 摄像机逻辑
+         *  -------------------------------------------------- */
+        const camera = { x: 0, y: 0 };
+
+        function updateCamera() {
+            // 摄像机镜头始终对齐玩家在屏幕中心
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+
+            // 限制摄像机不能看出了地图边界
+            camera.x = Math.max(0, Math.min(MAP_WIDTH - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(MAP_HEIGHT - canvas.height, camera.y));
+        }
+
+        /** --------------------------------------------------
+         *  4. 渲染核心
+         *  -------------------------------------------------- */
+        function drawMap() {
+            // 视口剔除（只绘制镜头内的瓦片，优化性能）
+            const startCol = Math.floor(camera.x / TILE_SIZE);
+            const endCol = Math.min(MAP_COLS, startCol + Math.ceil(canvas.width / TILE_SIZE) + 1);
+            const startRow = Math.floor(camera.y / TILE_SIZE);
+            const endRow = Math.min(MAP_ROWS, startRow + Math.ceil(canvas.height / TILE_SIZE) + 1);
+
+            for (let y = startRow; y < endRow; y++) {
+                for (let x = startCol; x < endCol; x++) {
+                    const t = MAP[y][x];
+                    let base = 'grass';
+                    if (t === 1) base = 'flower';
+                    if (t === 2) base = 'dirt';
+                    if (t === 3) base = 'water';
+                    if (t === 4) base = 'grass';
+                    
+                    const screenX = Math.floor(x * TILE_SIZE - camera.x);
+                    const screenY = Math.floor(y * TILE_SIZE - camera.y);
+
+                    ctx.drawImage(spriteCanvases[base], screenX, screenY, TILE_SIZE, TILE_SIZE);
+                    
+                    // 覆写农田状态
+                    if (t === 2) {
+                        const farm = farmStates[`${x},${y}`];
+                        if (farm) {
+                            if (farm.state === 'tilled' || farm.state === 'watered') {
+                                ctx.drawImage(spriteCanvases[farm.state], screenX, screenY, TILE_SIZE, TILE_SIZE);
+                            }
+                            if (farm.crop === 1) ctx.drawImage(spriteCanvases['seeds'], screenX, screenY, TILE_SIZE, TILE_SIZE);
+                            else if (farm.crop === 2) ctx.drawImage(spriteCanvases['sprout'], screenX, screenY, TILE_SIZE, TILE_SIZE);
+                            else if (farm.crop === 3) ctx.drawImage(spriteCanvases['mature'], screenX, screenY, TILE_SIZE, TILE_SIZE);
+                        }
+                    }
+
+                    if (t === 4) {
+                        ctx.drawImage(spriteCanvases['treeTop'], screenX, screenY - 16, TILE_SIZE, TILE_SIZE * 1.5);
+                    }
+
+                    // 绘制交互高亮框
+                    let tx = Math.floor(player.x/TILE_SIZE), ty = Math.floor(player.y/TILE_SIZE);
+                    if(player.dir==='up') ty-=1; else if(player.dir==='down') ty+=1; else if(player.dir==='left') tx-=1; else tx+=1;
+                    if(x === tx && y === ty && t === 2) {
+                        ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 2;
+                        ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+
+        function drawPlayer(time) {
+            const bobbing = player.moving ? Math.abs(Math.sin(time * 15)) * 3 : 0; 
+            const screenX = Math.floor(player.x - camera.x - TILE_SIZE / 2);
+            const screenY = Math.floor(player.y - camera.y - TILE_SIZE + 4 - bobbing); 
+
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.beginPath();
+            ctx.ellipse(screenX + TILE_SIZE/2, screenY + TILE_SIZE - 4 + bobbing, 10, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            let spriteName = 'player_' + player.dir;
+            ctx.drawImage(spriteCanvases[spriteName], screenX, screenY, TILE_SIZE, TILE_SIZE);
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.beginPath(); ctx.roundRect(8, 8, 120, 24, 4); ctx.fill();
+            
+            ctx.fillStyle = "white"; ctx.font = "bold 12px monospace"; ctx.textBaseline = "middle";
+            let h = Math.floor(gameTime / 60) % 24; let m = Math.floor(gameTime % 60);
+            let timeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+            ctx.fillText(`天色: ${timeStr}`, 14, 20);
+
+            // 工具栏
+            ctx.beginPath(); ctx.roundRect(8, 40, 32, 32, 4); ctx.fill();
+            ctx.beginPath(); ctx.roundRect(44, 40, 32, 32, 4); ctx.fill();
+            ctx.beginPath(); ctx.roundRect(80, 40, 32, 32, 4); ctx.fill();
+            
+            let icons = ['icon_hoe', 'icon_seed', 'icon_water'];
+            ctx.drawImage(spriteCanvases[icons[0]], 16, 48, 16, 16);
+            ctx.drawImage(spriteCanvases[icons[1]], 52, 48, 16, 16);
+            ctx.drawImage(spriteCanvases[icons[2]], 88, 48, 16, 16);
+            
+            ctx.strokeStyle = "#ffb0b5"; ctx.lineWidth = 2;
+            let sx = 8 + (currentTool - 1) * 36;
+            ctx.strokeRect(sx, 40, 32, 32);
+        }
+
+        let lastTime = 0;
+        let gameTimer = 0;
+        function loop(timestamp) {
+            const dt = (timestamp - lastTime) / 1000 || 0;
+            lastTime = timestamp;
+            const runTime = timestamp / 1000;
+
+            // 时间流逝: 1秒真实时间 = 10分钟游戏时间
+            gameTimer += dt;
+            if (gameTimer > 1.0) {
+                gameTime += 10;
+                gameTimer = 0;
+                if (gameTime >= 24 * 60) {
+                    gameTime -= 24 * 60; // 新的一天
+                    for (let key in farmStates) {
+                        let farm = farmStates[key];
+                        if (farm.state === 'watered' && farm.crop > 0 && farm.crop < 3) farm.crop += 1;
+                        if (farm.state === 'watered') farm.state = 'tilled'; // 干涸
+                    }
+                }
+            }
+
+            updatePlayer(dt);
+            updateCamera();
+
+            ctx.imageSmoothingEnabled = false; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            
+            drawMap();
+            drawPlayer(runTime);
+
+            let hour = gameTime / 60;
+            if (hour >= 18 && hour < 20) { ctx.fillStyle = "rgba(255, 120, 50, 0.2)"; ctx.fillRect(0, 0, canvas.width, canvas.height); } 
+            else if (hour >= 20 || hour < 5) { ctx.fillStyle = "rgba(10, 20, 50, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height); } 
+            else { ctx.fillStyle = "rgba(255, 245, 235, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height); } 
+
+            drawHUD();
+
+            requestAnimationFrame(loop);
+        }
+
+        // 启动主循环
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

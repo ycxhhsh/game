@@ -1,0 +1,73 @@
+<template>
+  <div id="ui-layer" @mousedown="preventFocusLoss">
+    <HUD />
+    <InventoryUI v-if="uiStore.isInventoryOpen" />
+    <DiaryUI v-if="uiStore.isDiaryOpen" />
+    <DialogueUI v-if="uiStore.isDialogOpen" />
+  </div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue';
+import { useUiStore } from '../store/uiStore';
+import HUD from './HUD.vue';
+import InventoryUI from './InventoryUI.vue';
+import DiaryUI from './DiaryUI.vue';
+import DialogueUI from './DialogueUI.vue';
+import { EventBus } from '../events/EventBus';
+
+const uiStore = useUiStore();
+
+// Stop pointer down from blurring Phaser canvas when clicking UI
+const preventFocusLoss = (e) => {
+  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+  }
+};
+
+onMounted(() => {
+  // Listen to external events
+  EventBus.on('SHOW_DIALOGUE', (data) => {
+    uiStore.showDialogue(data.text, data.name, data.avatar);
+  });
+  EventBus.on('TOGGLE_DIARY', () => {
+    uiStore.toggleDiary();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (uiStore.isDialogOpen) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        EventBus.emit('ADVANCE_DIALOGUE');
+        uiStore.closeDialogue();
+      }
+      return; 
+    }
+    
+    if (e.key === '1') uiStore.setTool(1);
+    if (e.key === '2') uiStore.setTool(2);
+    if (e.key === '3') {
+      if (uiStore.currentTool === 3) uiStore.toggleInventory();
+      uiStore.setTool(3);
+    }
+    if (e.key === 'E' || e.key === 'e') uiStore.toggleInventory();
+    if (e.key === 'Q' || e.key === 'q') uiStore.toggleDiary();
+    if (e.key === 'Escape') uiStore.closeAll();
+  });
+});
+</script>
+
+<style scoped>
+#ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 960px;
+  height: 540px;
+  pointer-events: none;
+  font-family: sans-serif;
+  z-index: 1000;
+}
+#ui-layer > * {
+  pointer-events: auto;
+}
+</style>
