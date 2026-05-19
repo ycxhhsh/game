@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { useGameStore } from '../store/gameStore';
 
 export default class RoomScene extends Phaser.Scene {
     constructor() {
@@ -6,6 +7,8 @@ export default class RoomScene extends Phaser.Scene {
     }
 
     create(data) {
+        this.gameStore = useGameStore();
+
         // Enable 2D lights for a cozy atmosphere
         this.lights.enable().setAmbientColor(0x333333);
 
@@ -86,7 +89,56 @@ export default class RoomScene extends Phaser.Scene {
         this.exitText = this.add.text(rx + roomW / 2, ry + roomH - 50, '[E] 返回外边', { font: 'bold 16px sans-serif', fill: '#ffffff' })
             .setOrigin(0.5).setAlpha(0).setDepth(100);
 
+        this.createSelfCareHotspots(rx, ry, roomW, roomH);
+
         this.isTransitioning = true;
+    }
+
+    createSelfCareHotspots(rx, ry, roomW, roomH) {
+        const hotspots = [
+            { type: 'listen', x: rx + 120, y: ry + 110, w: 110, h: 58, label: '听风角落', prompt: '[E] 听一会儿风' },
+            { type: 'rest', x: rx + roomW - 120, y: ry + 118, w: 112, h: 62, label: '软垫', prompt: '[E] 休息一下' },
+            { type: 'hugMomo', x: rx + roomW - 124, y: ry + roomH - 128, w: 116, h: 58, label: '墨墨窝', prompt: '[E] 抱抱墨墨' },
+            { type: 'realityEcho', x: rx + 126, y: ry + roomH - 128, w: 126, h: 58, label: '小书桌', prompt: '[E] 记录回响' }
+        ];
+
+        this.selfCareHotspots = hotspots.map((hotspot) => {
+            const rect = this.add.rectangle(hotspot.x, hotspot.y, hotspot.w, hotspot.h, 0xf4d8ae, 0.82)
+                .setStrokeStyle(2, 0xfff1d6, 0.9)
+                .setDepth(20);
+            rect.setPipeline('Light2D');
+            const label = this.add.text(hotspot.x, hotspot.y, hotspot.label, {
+                font: 'bold 15px sans-serif',
+                fill: '#4f372b'
+            }).setOrigin(0.5).setDepth(21);
+            const zone = new Phaser.Geom.Rectangle(hotspot.x - hotspot.w / 2, hotspot.y - hotspot.h / 2, hotspot.w, hotspot.h);
+            return { ...hotspot, rect, label, zone };
+        });
+
+        this.selfCareText = this.add.text(rx + roomW / 2, ry + roomH - 88, '', {
+            font: 'bold 16px sans-serif',
+            fill: '#fff8e8',
+            backgroundColor: 'rgba(55, 37, 28, 0.65)',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setAlpha(0).setDepth(120);
+    }
+
+    performRoomSelfCare(hotspot) {
+        const note = hotspot.type === 'realityEcho'
+            ? '在小屋里记下了一点现实回响。'
+            : '';
+        this.gameStore.performSelfCare(hotspot.type, { note });
+        this.selfCareText.setText('墨墨轻轻点头：我们慢一点也没关系。');
+        this.tweens.add({
+            targets: this.selfCareText,
+            alpha: 1,
+            duration: 160,
+            yoyo: true,
+            hold: 1200
+        });
+        this.time.delayedCall(1800, () => {
+            if (this.selfCareText && this.selfCareText.text.includes('墨墨')) this.selfCareText.setAlpha(0);
+        });
     }
 
     update() {
@@ -125,6 +177,16 @@ export default class RoomScene extends Phaser.Scene {
         }
 
         this.player.setDepth(this.player.y + 16);
+
+        const activeCare = this.selfCareHotspots.find((hotspot) => Phaser.Geom.Rectangle.Contains(hotspot.zone, this.player.x, this.player.y));
+        if (activeCare) {
+            this.selfCareText.setText(activeCare.prompt).setAlpha(1);
+            if (Phaser.Input.Keyboard.JustDown(this.keys.E)) {
+                this.performRoomSelfCare(activeCare);
+            }
+        } else if (this.selfCareText.alpha > 0 && !this.selfCareText.text.includes('墨墨')) {
+            this.selfCareText.setAlpha(0);
+        }
 
         // Check Exit Zone
         if (Phaser.Geom.Rectangle.Contains(this.exitZone, this.player.x, this.player.y)) {

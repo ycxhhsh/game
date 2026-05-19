@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { TILE_SIZE, PALETTE, SPRITES_DATA } from '../utils/constants';
 import { useGameStore } from '../store/gameStore';
 import { useUiStore } from '../store/uiStore';
-import { EventBus } from '../events/EventBus';
+import { EventBus, EMOTION_EVENTS } from '../events/EventBus';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -22,18 +22,23 @@ export default class GameScene extends Phaser.Scene {
         this.gameTime = 6 * 60;
         this.gameStore = useGameStore();
         this.uiStore = useUiStore();
+        this.currentWeather = this.gameStore.weather;
+        this.emotionDrainTimer = 0;
         
         // 5. 交互高光框输入控制
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys('W,A,S,D,T,E');
         this.input.keyboard.on('keydown', (e) => {
-            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen) return;
+            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen) return;
             if (e.key === ' ' || e.key === 'e' || e.key === 'E') this.handleInteract();
             if (e.key === 't' || e.key === 'T') this.passDay();
         });
 
         // 4. 环境光 (UI has been delegated to Vue via App.vue)
         this.createEnvironmentLight();
+        this.createHeartTree();
+        this.createMomoCompanion();
+        this.bindEmotionEvents();
 
         // 5. 交互高光框
         this.highlightBox = this.add.graphics();
@@ -72,6 +77,8 @@ export default class GameScene extends Phaser.Scene {
             this.keys.A.reset();
             this.keys.D.reset();
             this.cameras.main.fadeIn(400, 0, 0, 0);
+            this.refreshHeartTreeVisual();
+            this.updateMomoVisual();
         });
     }
 
@@ -339,6 +346,100 @@ export default class GameScene extends Phaser.Scene {
             tint: 0xffffff
         });
         this.weatherEmitter.setDepth(1999);
+
+        this.socialBatteryOverlay = this.add.rectangle(0, 0, this.MAP_COLS * TILE_SIZE, this.MAP_ROWS * TILE_SIZE, 0x777780)
+            .setOrigin(0, 0)
+            .setDepth(2001)
+            .setAlpha(0);
+    }
+
+    createHeartTree() {
+        const x = 18 * TILE_SIZE;
+        const y = 12 * TILE_SIZE;
+        this.heartTreeGlow = this.add.ellipse(x, y + 58, 112, 34, 0xf5b6c6, 0.22).setDepth(y + 64);
+        this.heartTreeSprite = this.add.image(x, y, 'spr_tree_cherry').setOrigin(0.5, 0.85).setDepth(y + 70).setScale(3.3);
+        this.heartTreeSprite.setInteractive({ useHandCursor: true });
+        this.heartTreeSprite.on('pointerdown', () => EventBus.emit(EMOTION_EVENTS.OPEN_HEART_TREE));
+        this.heartTreeWeeds = [];
+        this.refreshHeartTreeVisual();
+    }
+
+    refreshHeartTreeVisual() {
+        if (!this.heartTreeSprite) return;
+        const stage = this.gameStore.heartTree.stage;
+        const tintMap = {
+            wilted: 0x888c75,
+            recovering: 0xb0c77d,
+            healthy: 0x88c978,
+            blooming: 0xffb0c5
+        };
+        this.heartTreeSprite.setTint(tintMap[stage] || 0xb0c77d);
+        this.heartTreeGlow.setFillStyle(stage === 'blooming' ? 0xf5b6c6 : 0xb6d58a, stage === 'wilted' ? 0.08 : 0.22);
+
+        this.heartTreeWeeds.forEach((weed) => weed.destroy());
+        this.heartTreeWeeds = [];
+        const weedCount = Math.min(this.gameStore.heartTree.weeds, 6);
+        for (let i = 0; i < weedCount; i++) {
+            const weed = this.add.image(
+                this.heartTreeSprite.x - 46 + i * 18,
+                this.heartTreeSprite.y + 42 + (i % 2) * 5,
+                'grass_tuft'
+            ).setDepth(this.heartTreeSprite.depth + 1).setScale(1.4).setTint(0x7f8365);
+            this.heartTreeWeeds.push(weed);
+        }
+    }
+
+    createMomoCompanion() {
+        const key = `spr_momo_${this.gameStore.momo.mood}`;
+        this.momoSprite = this.add.sprite(this.player.x - 42, this.player.y + 28, key).setDepth(this.player.y + 12).setScale(2.2);
+        this.tweens.add({
+            targets: this.momoSprite,
+            y: this.momoSprite.y - 5,
+            duration: 1200,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        this.updateMomoVisual();
+    }
+
+    updateMomoVisual() {
+        if (!this.momoSprite) return;
+        const key = `spr_momo_${this.gameStore.momo.mood}`;
+        if (this.textures.exists(key)) this.momoSprite.setTexture(key);
+        if (this.gameStore.momo.pose === 'silent') {
+            this.momoSprite.setScale(1.9).setAlpha(0.82);
+        } else if (this.gameStore.momo.pose === 'sleepy') {
+            this.momoSprite.setScale(2.05).setAlpha(0.92);
+        } else {
+            this.momoSprite.setScale(2.25).setAlpha(1);
+        }
+    }
+
+    updateMomoFollower() {
+        if (!this.momoSprite || !this.player) return;
+        const offsetX = this.player.currentDir === 'right' ? -42 : 42;
+        const targetX = this.player.x + offsetX;
+        const targetY = this.player.y + 30;
+        this.momoSprite.x += (targetX - this.momoSprite.x) * 0.045;
+        this.momoSprite.y += (targetY - this.momoSprite.y) * 0.045;
+        this.momoSprite.setFlipX(this.momoSprite.x > this.player.x);
+        this.momoSprite.setDepth(this.momoSprite.y + 12);
+    }
+
+    bindEmotionEvents() {
+        this.onEmotionChanged = () => {
+            if (this.heartTreeSprite) this.refreshHeartTreeVisual();
+            if (this.momoSprite) this.updateMomoVisual();
+        };
+        EventBus.on(EMOTION_EVENTS.SELF_CARE_DONE, this.onEmotionChanged);
+        EventBus.on(EMOTION_EVENTS.MOOD_ENTRY_RECORDED, this.onEmotionChanged);
+        EventBus.on(EMOTION_EVENTS.MOMO_STATE_CHANGED, this.onEmotionChanged);
+        this.events.once('shutdown', () => {
+            EventBus.off(EMOTION_EVENTS.SELF_CARE_DONE, this.onEmotionChanged);
+            EventBus.off(EMOTION_EVENTS.MOOD_ENTRY_RECORDED, this.onEmotionChanged);
+            EventBus.off(EMOTION_EVENTS.MOMO_STATE_CHANGED, this.onEmotionChanged);
+        });
     }
 
     showEmote(target, emoteKey) {
@@ -403,7 +504,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleInteract() {
-        if (this.uiStore.isDialogOpen) { this.advanceDialogue(); return; }
+        if (this.uiStore.isDialogOpen) { EventBus.emit('ADVANCE_DIALOGUE'); return; }
         if (this.isActing) return;
 
         let tx = Math.floor(this.player.x / TILE_SIZE);
@@ -413,6 +514,14 @@ export default class GameScene extends Phaser.Scene {
         else if (this.player.currentDir === 'down') { ty += 1; }
         else if (this.player.currentDir === 'left') { tx -= 1; }
         else if (this.player.currentDir === 'right') { tx += 1; }
+
+        if (this.heartTreeSprite) {
+            const treeDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.heartTreeSprite.x, this.heartTreeSprite.y + 42);
+            if (treeDist <= 100) {
+                EventBus.emit(EMOTION_EVENTS.OPEN_HEART_TREE);
+                return;
+            }
+        }
 
         // 门锁交互检测 (进门事件)
         let doorDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.grandmaHouse.x + 130, this.grandmaHouse.y + 330);
@@ -456,6 +565,7 @@ export default class GameScene extends Phaser.Scene {
                 this.farmStates[key] = farm;
                 this.refreshFarmTile(tx, ty);
                 this.emitParticles(tx * TILE_SIZE + 16, ty * TILE_SIZE + 16, pColor, 8);
+                this.gameStore.adjustSocialBattery(-1, 'harvest');
                 return; // 直接收走，不播普通动作
             }
 
@@ -548,6 +658,7 @@ export default class GameScene extends Phaser.Scene {
         this.player.setTexture(`player_${animDir}`);
 
         if (willChange && farm) {
+            this.gameStore.adjustSocialBattery(-2, 'farmWork');
             if (this.uiStore.currentTool === 1) farm.state = 'tilled';
             else if (this.uiStore.currentTool === 2) farm.state = 'watered';
             else if (this.uiStore.currentTool === 3) {
@@ -567,7 +678,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.isActing || this.isInventoryOpen || this.uiStore.isDialogOpen || this.isDiaryOpen) return;
+        if (this.isActing || this.uiStore.isInventoryOpen || this.uiStore.isDialogOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen) return;
 
         // --- 控制与移动 ---
         this.player.setVelocity(0);
@@ -579,13 +690,14 @@ export default class GameScene extends Phaser.Scene {
 
         if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx*dx + dy*dy); dx /= len; dy /= len; }
 
-        this.player.setVelocityX(dx * this.playerSpeed);
-        this.player.setVelocityY(dy * this.playerSpeed);
+        const effectiveSpeed = this.gameStore.socialBattery < 30 ? 112 : this.playerSpeed;
+        this.player.setVelocityX(dx * effectiveSpeed);
+        this.player.setVelocityY(dy * effectiveSpeed);
 
         if(!this.player.currentDir) this.player.currentDir = 'down';
 
         if (dx !== 0 || dy !== 0) {
-            this.player.setVelocity(dx * this.playerSpeed, dy * this.playerSpeed);
+            this.player.setVelocity(dx * effectiveSpeed, dy * effectiveSpeed);
             if (dx > 0) { this.player.currentDir = 'right'; }
             else if (dx < 0) { this.player.currentDir = 'left'; }
             else if (dy > 0) { this.player.currentDir = 'down'; }
@@ -603,6 +715,13 @@ export default class GameScene extends Phaser.Scene {
 
         // 动态深度计算
         this.player.setDepth(this.player.y + 16);
+        this.updateMomoFollower();
+
+        this.emotionDrainTimer += delta;
+        if ((dx !== 0 || dy !== 0) && this.emotionDrainTimer > 5000) {
+            this.gameStore.adjustSocialBattery(-1, 'walking');
+            this.emotionDrainTimer = 0;
+        }
 
 
 
@@ -627,7 +746,10 @@ export default class GameScene extends Phaser.Scene {
             this.gameTimer -= 1000;
             if (this.gameTime >= 24 * 60) { // 过夜生长逻辑
                 this.gameTime -= 24 * 60; 
-                this.currentWeather = this.tomorrowWeather; // 天气演化羁绊
+                this.gameStore.advanceEmotionDay();
+                this.currentWeather = this.gameStore.weather;
+                this.refreshHeartTreeVisual();
+                this.updateMomoVisual();
                 for (let key in this.farmStates) {
                     let farm = this.farmStates[key];
                     if (farm.state === 'watered') {
@@ -671,6 +793,11 @@ export default class GameScene extends Phaser.Scene {
             if (this.nightOverlay.alpha !== overlayAlpha) this.nightOverlay.setAlpha(overlayAlpha);
         } else {
             if (this.nightOverlay.alpha !== 0) this.nightOverlay.setAlpha(0);
+        }
+
+        if (this.socialBatteryOverlay) {
+            const batteryAlpha = this.gameStore.socialBattery < 15 ? 0.2 : (this.gameStore.socialBattery < 30 ? 0.12 : 0);
+            if (this.socialBatteryOverlay.alpha !== batteryAlpha) this.socialBatteryOverlay.setAlpha(batteryAlpha);
         }
         
         if (hour >= 5 && hour < 18) {
