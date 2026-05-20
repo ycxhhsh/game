@@ -120,6 +120,15 @@
             border: 2px solid #5c5470;
         }
 
+        .momo-wrap {
+            height: 180px;
+        }
+
+        .grandma-wrap {
+            width: 180px;
+            height: 240px;
+        }
+
         canvas,
         img.pixel {
             image-rendering: -moz-crisp-edges;
@@ -292,40 +301,40 @@
 <main>
     <header>
         <h1>心屿小镇资产 Viewer</h1>
-        <p class="lead">用于查看角色动画、墨墨与心情树的粗糙可落地版，以及保留的精美参考稿。当前优先参考 rough pass。</p>
+        <p class="lead">用于查看角色动画、墨墨与心情树的当前可落地版，以及保留的精美参考稿。当前优先参考 current 资产。</p>
     </header>
 
     <section>
         <div class="section-head">
-            <h2>Rough Pass：墨墨与心情树</h2>
+            <h2>当前版本：墨墨与心情树</h2>
             <p class="section-note">更少颜色、更大像素、更接近当前原型可落地的视觉方向。</p>
         </div>
         <div class="concept-grid">
             <article class="concept-card">
-                <img src="/concepts/rough/momo-concept-rough.png" alt="墨墨粗糙概念总览">
+                <img src="/concepts/current/momo-concept.png" alt="墨墨概念总览">
                 <div class="caption">
-                    <h3>墨墨粗糙概念</h3>
+                    <h3>墨墨概念</h3>
                     <p>保留变色龙伙伴的情绪状态，但降低插画细节，方便改写成 32x32 或 48x48 游戏精灵。</p>
                 </div>
             </article>
             <article class="concept-card">
-                <img src="/concepts/rough/momo-actions-rough.png" alt="墨墨粗糙行动效果">
+                <img src="/concepts/current/momo-actions.png" alt="墨墨行动效果">
                 <div class="caption">
-                    <h3>墨墨粗糙行动</h3>
+                    <h3>墨墨行动</h3>
                     <p>活跃、困倦、蜷缩、呼吸、抱抱、蒲公英引导，动作轮廓优先于精致渲染。</p>
                 </div>
             </article>
             <article class="concept-card">
-                <img src="/concepts/rough/heart-tree-concept-rough.png" alt="心情树粗糙概念总览">
+                <img src="/concepts/current/heart-tree-concept.png" alt="心情树概念总览">
                 <div class="caption">
-                    <h3>心情树粗糙概念</h3>
+                    <h3>心情树概念</h3>
                     <p>树冠、树干、根系、杂草和花朵都压成更朴素的像素块，避免过度精美。</p>
                 </div>
             </article>
             <article class="concept-card">
-                <img src="/concepts/rough/heart-tree-stages-rough.png" alt="心情树粗糙阶段效果">
+                <img src="/concepts/current/heart-tree-stages.png" alt="心情树阶段效果">
                 <div class="caption">
-                    <h3>心情树粗糙阶段</h3>
+                    <h3>心情树阶段</h3>
                     <p>六个情绪阶段保持可读差异，但把光效和材质细节压低到原型可接受程度。</p>
                 </div>
             </article>
@@ -334,32 +343,106 @@
 
     <section>
         <div class="section-head">
-            <h2>Rough Pass：透明候选素材</h2>
+            <h2>当前版本：透明候选素材</h2>
             <p class="section-note">已抠图、裁切并降到更接近游戏精灵的尺寸。</p>
         </div>
         <div class="motion-preview">
             <div class="motion-stage">
-                <img id="momo-motion-preview" src="/concepts/rough/cutouts/momo-active-follow-rough.png" alt="墨墨动作循环预览">
+                <img id="momo-motion-preview" src="/concepts/current/cutouts/momo-active-follow.png" alt="墨墨动作循环预览">
             </div>
             <div class="motion-copy">
                 <h3 id="momo-motion-label">墨墨动作循环：活跃跟随</h3>
-                <p>这里用 rough cutout 做低成本动作预览：切换姿态 + 跳步节奏，实际地图里也使用类似的轻量跟随、跳动和呼吸反馈。</p>
+                <p>这里用当前 cutout 做低成本动作预览：切换姿态 + 跳步节奏，实际地图里也使用类似的轻量跟随、跳动和呼吸反馈。</p>
             </div>
         </div>
         <div class="cutout-grid">
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-active-follow-rough.png" alt="墨墨粗糙活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-sleepy-yawn-rough.png" alt="墨墨粗糙困倦打哈欠"></div><h3>墨墨 困倦打哈欠</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-low-energy-curled-rough.png" alt="墨墨粗糙低能量蜷缩"></div><h3>墨墨 低能量蜷缩</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-silent-breathing-rough.png" alt="墨墨粗糙沉默呼吸"></div><h3>墨墨 沉默呼吸</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-hug-ready-rough.png" alt="墨墨粗糙抱抱陪伴"></div><h3>墨墨 抱抱陪伴</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-dandelion-breath-rough.png" alt="墨墨粗糙蒲公英呼吸"></div><h3>墨墨 蒲公英呼吸</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-active-follow.png" alt="墨墨活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-sleepy-yawn.png" alt="墨墨困倦打哈欠"></div><h3>墨墨 困倦打哈欠</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-low-energy-curled.png" alt="墨墨低能量蜷缩"></div><h3>墨墨 低能量蜷缩</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-silent-breathing.png" alt="墨墨沉默呼吸"></div><h3>墨墨 沉默呼吸</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-hug-ready.png" alt="墨墨抱抱陪伴"></div><h3>墨墨 抱抱陪伴</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-dandelion-breath.png" alt="墨墨蒲公英呼吸"></div><h3>墨墨 蒲公英呼吸</h3></article>
 
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-wilted-fog-rough.png" alt="心情树粗糙枯萎灰雾"></div><h3>心情树 枯萎灰雾</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-recovering-leaves-rough.png" alt="心情树粗糙恢复嫩叶"></div><h3>心情树 恢复嫩叶</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-healthy-lush-rough.png" alt="心情树粗糙健康茂盛"></div><h3>心情树 健康茂盛</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-healing-blossom-rough.png" alt="心情树粗糙治愈花开"></div><h3>心情树 治愈花开</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-reality-echo-roots-rough.png" alt="心情树粗糙现实回响"></div><h3>心情树 现实回响</h3></article>
-            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/heart-tree-snowstorm-deep-roots-rough.png" alt="心情树粗糙深根暖光"></div><h3>心情树 深根暖光</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-wilted-fog.png" alt="心情树枯萎灰雾"></div><h3>心情树 枯萎灰雾</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-recovering-leaves.png" alt="心情树恢复嫩叶"></div><h3>心情树 恢复嫩叶</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-healthy-lush.png" alt="心情树健康茂盛"></div><h3>心情树 健康茂盛</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-healing-blossom.png" alt="心情树治愈花开"></div><h3>心情树 治愈花开</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-reality-echo-roots.png" alt="心情树现实回响"></div><h3>心情树 现实回响</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-snowstorm-deep-roots.png" alt="心情树深根暖光"></div><h3>心情树 深根暖光</h3></article>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>墨墨动作序列</h2>
+            <p class="section-note">六组 4 帧横向序列，基于当前墨墨形象制作，用于 viewer 预览。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-active" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>活跃跟随</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-sleepy" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>困倦打哈欠</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-curled" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>低能量蜷缩</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-silent" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>沉默呼吸</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-hug" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>抱抱陪伴</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-breath" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>蒲公英呼吸</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>林奶奶动作序列</h2>
+            <p class="section-note">轮椅坐姿与站立姿各 4 帧轻动作循环，仅用于 viewer 展示。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap grandma-wrap">
+                    <canvas id="cvs-grandma-wheelchair" width="240" height="320" style="width: 150px; height: 200px;"></canvas>
+                </div>
+                <h3>轮椅坐姿</h3>
+                <div class="dims">240 x 320</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap grandma-wrap">
+                    <canvas id="cvs-grandma-standing" width="240" height="320" style="width: 150px; height: 200px;"></canvas>
+                </div>
+                <h3>站立姿</h3>
+                <div class="dims">240 x 320</div>
+            </div>
         </div>
     </section>
 
@@ -412,7 +495,7 @@
     <section>
         <div class="section-head">
             <h2>精美参考稿：透明候选素材</h2>
-            <p class="section-note">上一版抠图素材仍可参考，但当前优先使用 rough pass。</p>
+            <p class="section-note">上一版抠图素材仍可参考，但当前优先使用 current 资产。</p>
         </div>
         <div class="cutout-grid">
             <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-active-follow.png" alt="墨墨活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
@@ -476,24 +559,24 @@
         <div class="container">
             <div class="card">
                 <div class="canvas-wrap">
-                    <canvas id="cvs-hoe" width="148" height="241" style="width: 110px; height: 180px;"></canvas>
+                    <canvas id="cvs-hoe" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
                 </div>
                 <h3>耕地 Hoeing</h3>
-                <div class="dims">148 x 241</div>
+                <div class="dims">320 x 460</div>
             </div>
             <div class="card">
                 <div class="canvas-wrap">
-                    <canvas id="cvs-water" width="138" height="193" style="width: 110px; height: 154px;"></canvas>
+                    <canvas id="cvs-water" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
                 </div>
                 <h3>浇水 Watering</h3>
-                <div class="dims">138 x 193</div>
+                <div class="dims">320 x 460</div>
             </div>
             <div class="card">
                 <div class="canvas-wrap">
-                    <canvas id="cvs-seed" width="150" height="250" style="width: 110px; height: 183px;"></canvas>
+                    <canvas id="cvs-seed" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
                 </div>
                 <h3>播种 Seeding</h3>
-                <div class="dims">静态原画</div>
+                <div class="dims">320 x 460</div>
             </div>
         </div>
     </section>
@@ -513,6 +596,8 @@
         let lastUpdate = performance.now();
 
         img.onload = () => {
+            ctx.clearRect(0, 0, fWidth, fHeight);
+            ctx.drawImage(img, 0, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
             function render(time) {
                 if (time - lastUpdate > frameInterval) {
                     currentFrame = (currentFrame + 1) % frames;
@@ -530,33 +615,25 @@
     attachSprite('cvs-down', '/asset/player_walk_down.png', 4, 266, 431);
     attachSprite('cvs-left', '/asset/player_walk_left.png', 4, 251, 446);
     attachSprite('cvs-right', '/asset/player_walk_right.png', 4, 251, 446);
-    attachSprite('cvs-hoe', '/player_hoe_sheet_v3.png', 4, 148, 241);
-    attachSprite('cvs-water', '/player_water_sheet.png', 4, 138, 193);
-
-    const seedCvs = document.getElementById('cvs-seed');
-    const seedCtx = seedCvs.getContext('2d');
-    const seedImg = new Image();
-    seedImg.src = '/player_hd_seed.png';
-    seedImg.onload = () => {
-        const sw = seedImg.width;
-        const sh = seedImg.height;
-        const targetW = 150;
-        const targetH = 250;
-        const scale = Math.min(targetW / sw, targetH / sh);
-        const w = sw * scale;
-        const h = sh * scale;
-        const dx = (targetW - w) / 2;
-        const dy = targetH - h;
-        seedCtx.drawImage(seedImg, 0, 0, sw, sh, dx, dy, w, h);
-    };
+    attachSprite('cvs-hoe', '/player_hoe_sheet_unified.png', 4, 320, 460);
+    attachSprite('cvs-water', '/player_water_sheet_unified.png', 4, 320, 460);
+    attachSprite('cvs-seed', '/player_seed_sheet_unified.png', 4, 320, 460);
+    attachSprite('cvs-momo-active', '/concepts/current/momo-sheets/momo-active-follow-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-sleepy', '/concepts/current/momo-sheets/momo-sleepy-yawn-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-curled', '/concepts/current/momo-sheets/momo-low-energy-curled-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-silent', '/concepts/current/momo-sheets/momo-silent-breathing-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-hug', '/concepts/current/momo-sheets/momo-hug-ready-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-breath', '/concepts/current/momo-sheets/momo-dandelion-breath-sheet.png', 4, 160, 160);
+    attachSprite('cvs-grandma-wheelchair', '/concepts/current/grandma/grandma-wheelchair-sheet.png', 4, 240, 320);
+    attachSprite('cvs-grandma-standing', '/concepts/current/grandma/grandma-standing-sheet.png', 4, 240, 320);
 
     const momoMotionFrames = [
-        ['/concepts/rough/cutouts/momo-active-follow-rough.png', '墨墨动作循环：活跃跟随'],
-        ['/concepts/rough/cutouts/momo-sleepy-yawn-rough.png', '墨墨动作循环：困倦打哈欠'],
-        ['/concepts/rough/cutouts/momo-low-energy-curled-rough.png', '墨墨动作循环：低能量蜷缩'],
-        ['/concepts/rough/cutouts/momo-silent-breathing-rough.png', '墨墨动作循环：沉默呼吸'],
-        ['/concepts/rough/cutouts/momo-hug-ready-rough.png', '墨墨动作循环：抱抱陪伴'],
-        ['/concepts/rough/cutouts/momo-dandelion-breath-rough.png', '墨墨动作循环：蒲公英呼吸']
+        ['/concepts/current/cutouts/momo-active-follow.png', '墨墨动作循环：活跃跟随'],
+        ['/concepts/current/cutouts/momo-sleepy-yawn.png', '墨墨动作循环：困倦打哈欠'],
+        ['/concepts/current/cutouts/momo-low-energy-curled.png', '墨墨动作循环：低能量蜷缩'],
+        ['/concepts/current/cutouts/momo-silent-breathing.png', '墨墨动作循环：沉默呼吸'],
+        ['/concepts/current/cutouts/momo-hug-ready.png', '墨墨动作循环：抱抱陪伴'],
+        ['/concepts/current/cutouts/momo-dandelion-breath.png', '墨墨动作循环：蒲公英呼吸']
     ];
     const momoMotionImg = document.getElementById('momo-motion-preview');
     const momoMotionLabel = document.getElementById('momo-motion-label');

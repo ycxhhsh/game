@@ -1,5 +1,26 @@
 # 🌻 心屿镇 (Heart Island Town) - 项目交接文档
 
+## 2026-05-20 资产交接补充
+
+### Viewer 资源状态
+- `viewer.html` 的“主角动画序列”已清理四向 walk sheet 边缘白边，原尺寸、4 帧布局和底部锚点保持不变。
+- `viewer.html` 的“工具动作序列”已切换到统一主角风格的完整动作 sheet：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 三张工具动作 sheet 均为 4 帧横向序列，整体 `1280x460`，单帧 `320x460`，仅用于 viewer 预览，尚未接入 `GameScene.js` 实机动作。
+- `viewer.html` 的“当前版本：墨墨与心情树”已更新为匹配当前主角工具动作质感的资源：
+  - 墨墨：`public/concepts/current/momo-concept.png`、`public/concepts/current/momo-actions.png`
+  - 心情树：`public/concepts/current/heart-tree-concept.png`、`public/concepts/current/heart-tree-stages.png`
+- 透明 cutout 位于 `public/concepts/current/cutouts/`，生成源图备份位于 `public/concepts/current/sources/`。`public/concepts/` 下上一版精美参考稿保持不动。
+- 墨墨新增 6 组动作 sheet，位于 `public/concepts/current/momo-sheets/`，每张 `640x160`、单帧 `160x160`、4 帧横向序列。
+- 林奶奶新增轮椅坐姿与站立姿动作 sheet，位于 `public/concepts/current/grandma/`，每张 `960x320`、单帧 `240x320`、4 帧横向序列。
+
+### 验收与后续
+- 验收入口：启动 `npm run dev` 后访问 `http://localhost:5888/viewer.html`，优先检查主角动画序列、工具动作序列、墨墨动作序列、林奶奶动作序列。
+- 透明 PNG 验收重点：角落 alpha 为 0，无白底、无明显 key 色边、无裁切，各动作播放时底部锚点稳定。
+- 下一步如需实机接入，需要单独更新 Phaser 加载与渲染逻辑，把 current cutout 或后续定稿资源接到游戏场景中；本轮不修改 `GameScene.js`。
+
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
 我们完全摒弃了传统的“疲劳值”、“主线枯燥任务”与“时间淘汰机制”，鼓励玩家伴随着每天随机的治愈天气，在海岛上自在发呆、种田以及随心所欲地去与留守的林奶奶建立无压力的情感羁绊。
