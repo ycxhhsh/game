@@ -14,7 +14,7 @@
   - 心情树：`public/concepts/current/heart-tree-concept.png`、`public/concepts/current/heart-tree-stages.png`
 - 透明 cutout 位于 `public/concepts/current/cutouts/`，生成源图备份位于 `public/concepts/current/sources/`。`public/concepts/` 下上一版精美参考稿保持不动。
 - 墨墨新增 6 组动作 sheet，位于 `public/concepts/current/momo-sheets/`，每张 `640x160`、单帧 `160x160`、4 帧横向序列。
-- 林奶奶新增轮椅坐姿与站立姿动作 sheet，位于 `public/concepts/current/grandma/`，每张 `960x320`、单帧 `240x320`、4 帧横向序列。
+- 林奶奶新增躺椅坐姿与站立姿动作 sheet，位于 `public/concepts/current/grandma/`，每张 `960x320`、单帧 `240x320`、4 帧横向序列。
 
 ### 验收与后续
 - 验收入口：启动 `npm run dev` 后访问 `http://localhost:5888/viewer.html`，优先检查主角动画序列、工具动作序列、墨墨动作序列、林奶奶动作序列。
