@@ -216,6 +216,59 @@
             justify-content: center;
         }
 
+        .motion-preview {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 22px;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 20px;
+            background: rgba(43, 48, 45, 0.92);
+            border: 1px solid rgba(168, 230, 207, 0.14);
+            border-radius: 12px;
+        }
+
+        .motion-stage {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 2px solid #5c5470;
+            background:
+                linear-gradient(180deg, rgba(168, 230, 207, 0.10), rgba(247, 215, 122, 0.08)),
+                repeating-conic-gradient(#ffffff18 0% 25%, #00000018 0% 50%) 50% / 18px 18px;
+        }
+
+        .motion-stage img {
+            max-width: 130px;
+            max-height: 130px;
+            image-rendering: pixelated;
+            transform-origin: 50% 90%;
+            animation: momo-hop 0.72s steps(2, end) infinite;
+        }
+
+        .motion-copy h3 {
+            color: var(--gold);
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .motion-copy p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        @keyframes momo-hop {
+            0%, 100% {
+                transform: translateY(4px) rotate(-2deg) scale(1);
+            }
+            50% {
+                transform: translateY(-8px) rotate(3deg) scale(1.04, 0.98);
+            }
+        }
+
         @media (max-width: 920px) {
             body {
                 padding: 22px;
@@ -227,6 +280,10 @@
 
             .cutout-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .motion-preview {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -279,6 +336,15 @@
         <div class="section-head">
             <h2>Rough Pass：透明候选素材</h2>
             <p class="section-note">已抠图、裁切并降到更接近游戏精灵的尺寸。</p>
+        </div>
+        <div class="motion-preview">
+            <div class="motion-stage">
+                <img id="momo-motion-preview" src="/concepts/rough/cutouts/momo-active-follow-rough.png" alt="墨墨动作循环预览">
+            </div>
+            <div class="motion-copy">
+                <h3 id="momo-motion-label">墨墨动作循环：活跃跟随</h3>
+                <p>这里用 rough cutout 做低成本动作预览：切换姿态 + 跳步节奏，实际地图里也使用类似的轻量跟随、跳动和呼吸反馈。</p>
+            </div>
         </div>
         <div class="cutout-grid">
             <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/rough/cutouts/momo-active-follow-rough.png" alt="墨墨粗糙活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
@@ -483,6 +549,25 @@
         const dy = targetH - h;
         seedCtx.drawImage(seedImg, 0, 0, sw, sh, dx, dy, w, h);
     };
+
+    const momoMotionFrames = [
+        ['/concepts/rough/cutouts/momo-active-follow-rough.png', '墨墨动作循环：活跃跟随'],
+        ['/concepts/rough/cutouts/momo-sleepy-yawn-rough.png', '墨墨动作循环：困倦打哈欠'],
+        ['/concepts/rough/cutouts/momo-low-energy-curled-rough.png', '墨墨动作循环：低能量蜷缩'],
+        ['/concepts/rough/cutouts/momo-silent-breathing-rough.png', '墨墨动作循环：沉默呼吸'],
+        ['/concepts/rough/cutouts/momo-hug-ready-rough.png', '墨墨动作循环：抱抱陪伴'],
+        ['/concepts/rough/cutouts/momo-dandelion-breath-rough.png', '墨墨动作循环：蒲公英呼吸']
+    ];
+    const momoMotionImg = document.getElementById('momo-motion-preview');
+    const momoMotionLabel = document.getElementById('momo-motion-label');
+    let momoMotionIndex = 0;
+
+    setInterval(() => {
+        momoMotionIndex = (momoMotionIndex + 1) % momoMotionFrames.length;
+        const [src, label] = momoMotionFrames[momoMotionIndex];
+        momoMotionImg.src = src;
+        momoMotionLabel.textContent = label;
+    }, 900);
 </script>
 </body>
 </html>

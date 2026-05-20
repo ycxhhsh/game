@@ -392,14 +392,16 @@ export default class GameScene extends Phaser.Scene {
     createMomoCompanion() {
         const key = `spr_momo_${this.gameStore.momo.mood}`;
         this.momoSprite = this.add.sprite(this.player.x - 42, this.player.y + 28, key).setDepth(this.player.y + 12).setScale(2.2);
-        this.tweens.add({
-            targets: this.momoSprite,
-            y: this.momoSprite.y - 5,
-            duration: 1200,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        this.momoAnchor = new Phaser.Math.Vector2(this.momoSprite.x, this.momoSprite.y);
+        this.momoAnimTime = 0;
+        this.momoSide = -1;
+        this.momoBaseScale = 2.2;
+        this.momoShadow = this.add.ellipse(this.momoSprite.x, this.momoSprite.y + 12, 36, 10, 0x1b1b1b, 0.18)
+            .setDepth(this.momoSprite.depth - 1);
+        this.momoBreathRing = this.add.ellipse(this.momoSprite.x, this.momoSprite.y, 38, 28)
+            .setStrokeStyle(2, 0xa8e6cf, 0.4)
+            .setDepth(this.momoSprite.depth + 1)
+            .setVisible(false);
         this.updateMomoVisual();
     }
 
@@ -408,23 +410,74 @@ export default class GameScene extends Phaser.Scene {
         const key = `spr_momo_${this.gameStore.momo.mood}`;
         if (this.textures.exists(key)) this.momoSprite.setTexture(key);
         if (this.gameStore.momo.pose === 'silent') {
-            this.momoSprite.setScale(1.9).setAlpha(0.82);
+            this.momoBaseScale = 1.9;
+            this.momoSprite.setAlpha(0.82);
         } else if (this.gameStore.momo.pose === 'sleepy') {
-            this.momoSprite.setScale(2.05).setAlpha(0.92);
+            this.momoBaseScale = 2.05;
+            this.momoSprite.setAlpha(0.92);
         } else {
-            this.momoSprite.setScale(2.25).setAlpha(1);
+            this.momoBaseScale = 2.25;
+            this.momoSprite.setAlpha(1);
         }
+        this.momoSprite.setScale(this.momoBaseScale);
     }
 
-    updateMomoFollower() {
+    updateMomoFollower(delta, isPlayerMoving) {
         if (!this.momoSprite || !this.player) return;
-        const offsetX = this.player.currentDir === 'right' ? -42 : 42;
+        this.momoAnimTime += delta;
+
+        if (this.player.currentDir === 'right') this.momoSide = -1;
+        else if (this.player.currentDir === 'left') this.momoSide = 1;
+
+        const offsetX = this.momoSide * 42;
+        const offsetY = this.player.currentDir === 'up' ? 44 : 28;
         const targetX = this.player.x + offsetX;
-        const targetY = this.player.y + 30;
-        this.momoSprite.x += (targetX - this.momoSprite.x) * 0.045;
-        this.momoSprite.y += (targetY - this.momoSprite.y) * 0.045;
+        const targetY = this.player.y + offsetY;
+        const distance = Phaser.Math.Distance.Between(this.momoAnchor.x, this.momoAnchor.y, targetX, targetY);
+        const followLerp = distance > 180 ? 0.18 : (isPlayerMoving ? 0.105 : 0.065);
+
+        if (distance > 320) {
+            this.momoAnchor.set(targetX, targetY);
+        } else {
+            this.momoAnchor.x += (targetX - this.momoAnchor.x) * followLerp;
+            this.momoAnchor.y += (targetY - this.momoAnchor.y) * followLerp;
+        }
+
+        const t = this.momoAnimTime;
+        const pose = this.gameStore.momo.pose;
+        const hop = isPlayerMoving && pose === 'active' ? Math.abs(Math.sin(t * 0.012)) * 8 : 0;
+        const breath = pose === 'silent' ? Math.sin(t * 0.004) : Math.sin(t * 0.006);
+        const idleBob = pose === 'curled' ? 0 : breath * (pose === 'silent' ? 1.5 : 2.5);
+        const scalePulse = pose === 'silent' ? 1 + breath * 0.025 : 1 + Math.max(0, breath) * 0.012;
+        const walkTilt = isPlayerMoving && pose === 'active' ? Math.sin(t * 0.012) * 4 : breath * 1.2;
+
+        this.momoSprite.x = this.momoAnchor.x;
+        this.momoSprite.y = this.momoAnchor.y + idleBob - hop;
+        this.momoSprite.setScale(this.momoBaseScale * scalePulse);
+        this.momoSprite.setAngle(walkTilt);
         this.momoSprite.setFlipX(this.momoSprite.x > this.player.x);
         this.momoSprite.setDepth(this.momoSprite.y + 12);
+
+        if (this.momoShadow) {
+            this.momoShadow.x = this.momoAnchor.x;
+            this.momoShadow.y = this.momoAnchor.y + 16;
+            this.momoShadow.setScale(1 + Math.min(distance / 260, 0.45), 1);
+            this.momoShadow.setDepth(this.momoSprite.depth - 1);
+            this.momoShadow.setAlpha(pose === 'silent' ? 0.1 : 0.18);
+        }
+
+        if (this.momoBreathRing) {
+            const showRing = pose === 'silent';
+            this.momoBreathRing.setVisible(showRing);
+            if (showRing) {
+                const ringScale = 1.05 + Math.max(0, breath) * 0.35;
+                this.momoBreathRing.x = this.momoSprite.x;
+                this.momoBreathRing.y = this.momoSprite.y + 2;
+                this.momoBreathRing.setScale(ringScale);
+                this.momoBreathRing.setAlpha(0.18 + Math.max(0, breath) * 0.28);
+                this.momoBreathRing.setDepth(this.momoSprite.depth + 1);
+            }
+        }
     }
 
     bindEmotionEvents() {
@@ -715,7 +768,7 @@ export default class GameScene extends Phaser.Scene {
 
         // 动态深度计算
         this.player.setDepth(this.player.y + 16);
-        this.updateMomoFollower();
+        this.updateMomoFollower(delta, dx !== 0 || dy !== 0);
 
         this.emotionDrainTimer += delta;
         if ((dx !== 0 || dy !== 0) && this.emotionDrainTimer > 5000) {
