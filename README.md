@@ -21,6 +21,27 @@
 - 透明 PNG 验收重点：角落 alpha 为 0，无白底、无明显 key 色边、无裁切，各动作播放时底部锚点稳定。
 - 下一步如需实机接入，需要单独更新 Phaser 加载与渲染逻辑，把 current cutout 或后续定稿资源接到游戏场景中；本轮不修改 `GameScene.js`。
 
+## 2026-05-21 Style Lab 画风试验窗口
+
+### 当前接入范围
+- 新增独立入口 `style-lab.html`，启动 `npm run dev` 后访问 `http://localhost:5888/style-lab.html` 可进入新画风试验窗口。
+- 本轮仅做画风融合试验，不修改正式 `src/scenes/GameScene.js`，也不迁移完整种田、背包、天气、对话和心情树 UI。
+- 试验场景位于 `src/style-lab/`，包含可移动主角、相机跟随、基础碰撞、墨墨跟随、林奶奶摇摇躺椅 idle 展示。
+- `vite.config.js` 已加入多页构建输入，`npm run build` 会同时输出 `dist/index.html` 与 `dist/style-lab.html`。
+- 角色沿用当前 viewer 优先资源：主角四向 walk sheet、墨墨 active follow sheet、林奶奶摇摇躺椅 sheet。
+
+### 世界资源包
+- 新画风地图资源位于 `public/assets/style-lab/`，统一为清晰描边、柔和像素阴影、温暖 chibi 游戏资产质感。
+- 地面 tile 位于 `public/assets/style-lab/tiles/`：草地 3 种、泥地 2 种、耕地 2 种、水面 2 帧、小路 2 种，均为 `64x64`。
+- 自然物件位于 `public/assets/style-lab/objects/`：阔叶树、松树、开花树、小果树、矮灌木树、小屋、心情树。
+- 花草位于 `public/assets/style-lab/foliage/`：草丛、野花、蒲公英、小蘑菇、蕨叶、石边草、粉花、黄花。
+- 装饰物位于 `public/assets/style-lab/props/`：小石头、木栅栏段、木牌、田边小桶；软阴影素材为 `public/assets/style-lab/soft_shadow.png`。
+
+### 验收方式
+- 页面验收：打开 `http://localhost:5888/style-lab.html`，检查玩家可移动、相机跟随、地图可观察、基础碰撞有效、墨墨跟随主角、林奶奶摇摇躺椅循环正常。
+- 视觉验收：确认农田区、林奶奶小屋区、心情树区、水岸与小路区都有明确分区；树、花草、石头等自然物件可见多种变体，避免全地图重复同一种资源。
+- 资源验收：透明物件 PNG 四角 alpha 为 0，地面 tile 可平铺，无白底和明显 key 色边。
+
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
 我们完全摒弃了传统的“疲劳值”、“主线枯燥任务”与“时间淘汰机制”，鼓励玩家伴随着每天随机的治愈天气，在海岛上自在发呆、种田以及随心所欲地去与留守的林奶奶建立无压力的情感羁绊。
@@ -58,7 +79,14 @@ npm run dev
 - 您就可以直接在浏览器中访问画廊工具页：[http://localhost:5888/viewer.html](http://localhost:5888/viewer.html)
 - 画廊页支持任意分辨率流式播放，由于调用的是纯物理底稿素材，不会占用任何游戏内存。您可以查阅本迭代的所有废弃兼过渡高清资源。
 
-### 3. 生成公网站点 (Build for Production)
+### 3. 新画风试验窗口 (Style Lab)
+为了验证当前主角、墨墨、林奶奶与新地图画风的融合效果，根目录新增了独立试验入口：
+
+- 启动 `npm run dev` 后访问：[http://localhost:5888/style-lab.html](http://localhost:5888/style-lab.html)
+- 该窗口使用 `src/style-lab/` 下的独立 Phaser 场景，不会影响正式游戏入口和 `viewer.html`。
+- 目前用于观察新地图资源、角色比例、底部锚点排序、墨墨跟随和林奶奶摇摇躺椅展示，后续确认方向后再迁回正式 `GameScene.js`。
+
+### 4. 生成公网站点 (Build for Production)
 如果希望将游戏分享到如 **GitHub Pages** 或独立游戏平台 **itch.io** 供全球玩家网页串流游玩：
 1. 运行 `npm run build` 进行极速压缩打包。
 2. 命令走完后，同级目录会新生成一个 `dist` 文件夹，包含 `index.html` 以及压缩过的 `assets`。这就是全静态、免后端的直接网页游戏打包主体。您可以将它上传至这世上的任何公网服务器！
