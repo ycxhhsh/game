@@ -42,6 +42,31 @@
 - 视觉验收：确认农田区、林奶奶小屋区、心情树区、水岸与小路区都有明确分区；树、花草、石头等自然物件可见多种变体，避免全地图重复同一种资源。
 - 资源验收：透明物件 PNG 四角 alpha 为 0，地面 tile 可平铺，无白底和明显 key 色边。
 
+## 2026-05-22 Style Lab 二轮接入与墨墨逐帧动画
+
+### Style Lab 结构调整
+- `src/style-lab/StyleLabScene.js` 保持为独立试验场景，正式 `src/scenes/GameScene.js` 仍未修改。
+- 新增 `src/style-lab/styleLabAssets.js` 管理 Style Lab 的 tile、世界物件、主角、墨墨和林奶奶 sheet 清单。
+- 新增 `src/style-lab/styleLabLayout.js` 管理地图尺寸、农田、小路、水域、地标、树木、花草和装饰物摆放数据。
+- 这次拆分后，后续迁回正式游戏时可以优先复用资源 manifest、布局数据、变体池和底部锚点排序策略。
+
+### 墨墨逐帧动画
+- 新增墨墨 animated sheet，位于 `public/concepts/current/momo-sheets/animated/`：
+  - `momo-active-follow-animated-sheet.png`
+  - `momo-sleepy-yawn-animated-sheet.png`
+  - `momo-low-energy-curled-animated-sheet.png`
+  - `momo-silent-breathing-animated-sheet.png`
+  - `momo-hug-ready-animated-sheet.png`
+  - `momo-dandelion-breath-animated-sheet.png`
+- 每张仍为 `640x160`、单帧 `160x160`、4 帧横向序列，底部锚点保持一致；在原动作基础上增强了跳步、呼吸、蜷缩、抱抱和蒲公英粒子的帧内变化。
+- `viewer.html` 的墨墨动作序列已切换到 animated sheet，并把“透明候选素材”区的墨墨预览改为逐帧 canvas 轮播。
+- `style-lab.html` 会根据场景状态切换墨墨动画：移动时活跃跟随，靠近林奶奶时抱抱，靠近心情树时蒲公英呼吸，原地停留后进入沉默呼吸、困倦打哈欠或低能量蜷缩。
+
+### 验收方式
+- 打开 `http://localhost:5888/viewer.html`，检查“墨墨动作序列”和顶部墨墨预览是否是真正逐帧播放，不再只是切换静态 cutout。
+- 打开 `http://localhost:5888/style-lab.html`，移动主角、停留、靠近林奶奶和心情树，观察墨墨状态切换。
+- 资源检查：animated sheet 尺寸为 `640x160`，四角 alpha 为 0，播放时无白底、无明显缩放漂移。
+
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
 我们完全摒弃了传统的“疲劳值”、“主线枯燥任务”与“时间淘汰机制”，鼓励玩家伴随着每天随机的治愈天气，在海岛上自在发呆、种田以及随心所欲地去与留守的林奶奶建立无压力的情感羁绊。

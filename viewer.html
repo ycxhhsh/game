@@ -250,12 +250,10 @@
                 repeating-conic-gradient(#ffffff18 0% 25%, #00000018 0% 50%) 50% / 18px 18px;
         }
 
-        .motion-stage img {
-            max-width: 130px;
-            max-height: 130px;
+        .motion-stage canvas {
+            width: 130px;
+            height: 130px;
             image-rendering: pixelated;
-            transform-origin: 50% 90%;
-            animation: momo-hop 0.72s steps(2, end) infinite;
         }
 
         .motion-copy h3 {
@@ -267,15 +265,6 @@
         .motion-copy p {
             color: var(--muted);
             line-height: 1.6;
-        }
-
-        @keyframes momo-hop {
-            0%, 100% {
-                transform: translateY(4px) rotate(-2deg) scale(1);
-            }
-            50% {
-                transform: translateY(-8px) rotate(3deg) scale(1.04, 0.98);
-            }
         }
 
         @media (max-width: 920px) {
@@ -348,11 +337,11 @@
         </div>
         <div class="motion-preview">
             <div class="motion-stage">
-                <img id="momo-motion-preview" src="/concepts/current/cutouts/momo-active-follow.png" alt="墨墨动作循环预览">
+                <canvas id="momo-motion-canvas" width="160" height="160" aria-label="墨墨逐帧动作循环预览"></canvas>
             </div>
             <div class="motion-copy">
-                <h3 id="momo-motion-label">墨墨动作循环：活跃跟随</h3>
-                <p>这里用当前 cutout 做低成本动作预览：切换姿态 + 跳步节奏，实际地图里也使用类似的轻量跟随、跳动和呼吸反馈。</p>
+                <h3 id="momo-motion-label">墨墨逐帧循环：活跃跟随</h3>
+                <p>这里预览 current animated sheet：同一动作内部有跳步、呼吸、蜷缩、抱抱和蒲公英粒子的逐帧变化，Style Lab 也会按场景状态切换。</p>
             </div>
         </div>
         <div class="cutout-grid">
@@ -375,7 +364,7 @@
     <section>
         <div class="section-head">
             <h2>墨墨动作序列</h2>
-            <p class="section-note">六组 4 帧横向序列，基于当前墨墨形象制作，用于 viewer 预览。</p>
+            <p class="section-note">六组 4 帧横向序列，基于当前墨墨形象增强逐帧变化，用于 viewer 与 Style Lab 预览。</p>
         </div>
         <div class="container">
             <div class="card">
@@ -618,33 +607,65 @@
     attachSprite('cvs-hoe', '/player_hoe_sheet_unified.png', 4, 320, 460);
     attachSprite('cvs-water', '/player_water_sheet_unified.png', 4, 320, 460);
     attachSprite('cvs-seed', '/player_seed_sheet_unified.png', 4, 320, 460);
-    attachSprite('cvs-momo-active', '/concepts/current/momo-sheets/momo-active-follow-sheet.png', 4, 160, 160);
-    attachSprite('cvs-momo-sleepy', '/concepts/current/momo-sheets/momo-sleepy-yawn-sheet.png', 4, 160, 160);
-    attachSprite('cvs-momo-curled', '/concepts/current/momo-sheets/momo-low-energy-curled-sheet.png', 4, 160, 160);
-    attachSprite('cvs-momo-silent', '/concepts/current/momo-sheets/momo-silent-breathing-sheet.png', 4, 160, 160);
-    attachSprite('cvs-momo-hug', '/concepts/current/momo-sheets/momo-hug-ready-sheet.png', 4, 160, 160);
-    attachSprite('cvs-momo-breath', '/concepts/current/momo-sheets/momo-dandelion-breath-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-active', '/concepts/current/momo-sheets/animated/momo-active-follow-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-sleepy', '/concepts/current/momo-sheets/animated/momo-sleepy-yawn-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-curled', '/concepts/current/momo-sheets/animated/momo-low-energy-curled-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-silent', '/concepts/current/momo-sheets/animated/momo-silent-breathing-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-hug', '/concepts/current/momo-sheets/animated/momo-hug-ready-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-breath', '/concepts/current/momo-sheets/animated/momo-dandelion-breath-animated-sheet.png', 4, 160, 160);
     attachSprite('cvs-grandma-rocking', '/concepts/current/grandma/grandma-rocking-chair-sheet.png', 4, 240, 320);
     attachSprite('cvs-grandma-standing', '/concepts/current/grandma/grandma-standing-sheet.png', 4, 240, 320);
 
-    const momoMotionFrames = [
-        ['/concepts/current/cutouts/momo-active-follow.png', '墨墨动作循环：活跃跟随'],
-        ['/concepts/current/cutouts/momo-sleepy-yawn.png', '墨墨动作循环：困倦打哈欠'],
-        ['/concepts/current/cutouts/momo-low-energy-curled.png', '墨墨动作循环：低能量蜷缩'],
-        ['/concepts/current/cutouts/momo-silent-breathing.png', '墨墨动作循环：沉默呼吸'],
-        ['/concepts/current/cutouts/momo-hug-ready.png', '墨墨动作循环：抱抱陪伴'],
-        ['/concepts/current/cutouts/momo-dandelion-breath.png', '墨墨动作循环：蒲公英呼吸']
-    ];
-    const momoMotionImg = document.getElementById('momo-motion-preview');
-    const momoMotionLabel = document.getElementById('momo-motion-label');
-    let momoMotionIndex = 0;
+    function attachCyclingSprite(canvasId, sequences, frames, fWidth, fHeight) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const label = document.getElementById('momo-motion-label');
+        let sequenceIndex = 0;
+        let currentFrame = 0;
+        let lastUpdate = performance.now();
+        let lastSwitch = performance.now();
+        const img = new Image();
 
-    setInterval(() => {
-        momoMotionIndex = (momoMotionIndex + 1) % momoMotionFrames.length;
-        const [src, label] = momoMotionFrames[momoMotionIndex];
-        momoMotionImg.src = src;
-        momoMotionLabel.textContent = label;
-    }, 900);
+        function loadSequence() {
+            const [src, text] = sequences[sequenceIndex];
+            img.src = src;
+            label.textContent = text;
+            currentFrame = 0;
+        }
+
+        img.onload = () => {
+            ctx.clearRect(0, 0, fWidth, fHeight);
+            ctx.drawImage(img, 0, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
+        };
+
+        function render(time) {
+            if (time - lastSwitch > 2600) {
+                sequenceIndex = (sequenceIndex + 1) % sequences.length;
+                lastSwitch = time;
+                loadSequence();
+            }
+            if (time - lastUpdate > frameInterval && img.complete) {
+                currentFrame = (currentFrame + 1) % frames;
+                lastUpdate = time;
+                ctx.clearRect(0, 0, fWidth, fHeight);
+                ctx.drawImage(img, currentFrame * fWidth, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
+            }
+            requestAnimationFrame(render);
+        }
+
+        loadSequence();
+        requestAnimationFrame(render);
+    }
+
+    const momoMotionFrames = [
+        ['/concepts/current/momo-sheets/animated/momo-active-follow-animated-sheet.png', '墨墨逐帧循环：活跃跟随'],
+        ['/concepts/current/momo-sheets/animated/momo-sleepy-yawn-animated-sheet.png', '墨墨逐帧循环：困倦打哈欠'],
+        ['/concepts/current/momo-sheets/animated/momo-low-energy-curled-animated-sheet.png', '墨墨逐帧循环：低能量蜷缩'],
+        ['/concepts/current/momo-sheets/animated/momo-silent-breathing-animated-sheet.png', '墨墨逐帧循环：沉默呼吸'],
+        ['/concepts/current/momo-sheets/animated/momo-hug-ready-animated-sheet.png', '墨墨逐帧循环：抱抱陪伴'],
+        ['/concepts/current/momo-sheets/animated/momo-dandelion-breath-animated-sheet.png', '墨墨逐帧循环：蒲公英呼吸']
+    ];
+    attachCyclingSprite('momo-motion-canvas', momoMotionFrames, 4, 160, 160);
 </script>
 </body>
 </html>
