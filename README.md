@@ -62,9 +62,23 @@
 - `viewer.html` 的墨墨动作序列已切换到 animated sheet，并把“透明候选素材”区的墨墨预览改为逐帧 canvas 轮播。
 - `style-lab.html` 会根据场景状态切换墨墨动画：移动时活跃跟随，靠近林奶奶时抱抱，靠近心情树时蒲公英呼吸，原地停留后进入沉默呼吸、困倦打哈欠或低能量蜷缩。
 
+### Style Lab 二轮接入
+- `style-lab.html` 已接入主角工具动作 sheet：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 试验场景中新增轻量种田验证逻辑：按 `1/2/3` 切换锄头、水壶、种子，面向农田按 `E` 或 `Space` 可依次完成普通地块、耕地、湿润耕地、播种小芽的状态变化。工具动作播放时会暂停移动，并用统一底部锚点的动作 sprite 覆盖主角当前位置。
+- 林奶奶摇摇躺椅展示比例已从大画面展示缩小为接近主角体量，阴影、互动半径和碰撞范围同步收窄。
+- 墨墨跟随改为贴地小步跳：停下时稳定落地，移动时仅有 1-2px 的脚步起伏，并使用固定在脚底附近的软阴影强化落地感。
+- 石头、栅栏、小桶、小屋、心情树、林奶奶摇椅等硬物已加入碰撞；小花小草默认不碰撞，避免走路过卡。
+- 自然物摆放规则已收紧：树木禁止出现在水域、农田、小路、房屋入口和水岸缓冲区；石头偏向路边、田边和树根附近；花草以小簇分布，保留至少 5 种树与 8 种花草变体。
+- 新增 Style Lab 专用小屋内部场景 `src/style-lab/StyleLabInteriorScene.js`，背景图位于 `public/assets/style-lab/interior/cottage-interior.png`。靠近室外小屋门按 `Enter` 进屋，室内可走并有床、桌子、炉灶、书架等基础碰撞，门口按 `Enter` 或 `E` 返回室外。
+- 本轮仍只修改 Style Lab 试验窗口和资源交接说明，正式 `src/scenes/GameScene.js`、正式 `src/scenes/RoomScene.js`、背包数量、体力消耗、作物成长天数和剧情对话均未接入。
+
 ### 验收方式
 - 打开 `http://localhost:5888/viewer.html`，检查“墨墨动作序列”和顶部墨墨预览是否是真正逐帧播放，不再只是切换静态 cutout。
-- 打开 `http://localhost:5888/style-lab.html`，移动主角、停留、靠近林奶奶和心情树，观察墨墨状态切换。
+- 打开 `http://localhost:5888/style-lab.html`，移动主角、停留、靠近林奶奶和心情树，观察墨墨状态切换；检查林奶奶比例、树/石头/硬物碰撞、自然物分布和水岸避让。
+- 在 Style Lab 中按 `1/2/3` 切工具，面向农田按 `E` 或 `Space`，检查耕地、浇水、播种动作和地块状态变化；靠近小屋门按 `Enter` 进入室内，室内按 `Enter` 或 `E` 返回。
 - 资源检查：animated sheet 尺寸为 `640x160`，四角 alpha 为 0，播放时无白底、无明显缩放漂移。
 
 ## 🎮 游戏简介
