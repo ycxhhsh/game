@@ -124,6 +124,7 @@ export default class StyleLabScene extends Phaser.Scene {
                 anim: sheet.anim,
                 key: sheet.key,
                 frameRate: sheet.frameRate,
+                frames: sheet.frames,
                 repeat: 0
             })),
             {
@@ -133,11 +134,11 @@ export default class StyleLabScene extends Phaser.Scene {
             }
         ];
 
-        animations.forEach(({ anim, key, frameRate, repeat = -1 }) => {
+        animations.forEach(({ anim, key, frameRate, repeat = -1, frames = 4 }) => {
             if (this.anims.exists(anim)) this.anims.remove(anim);
             this.anims.create({
                 key: anim,
-                frames: this.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
+                frames: this.anims.generateFrameNumbers(key, { start: 0, end: frames - 1 }),
                 frameRate,
                 repeat
             });
@@ -397,13 +398,13 @@ export default class StyleLabScene extends Phaser.Scene {
             .setVisible(true);
         this.playerAction.play(sheet.anim);
 
-        this.time.delayedCall(230, () => {
+        this.time.delayedCall(360, () => {
             if (tool === 1) this.emitActionParticles(0xc49a6c, 4);
             if (tool === 2) this.emitActionParticles(0x8fd9ff, 7);
             if (tool === 3) this.emitActionParticles(0xffd77a, 5);
             onImpact();
         });
-        this.time.delayedCall(560, () => {
+        this.time.delayedCall(860, () => {
             this.player.visible = true;
             this.playerAction.setVisible(false);
             this.isActing = false;

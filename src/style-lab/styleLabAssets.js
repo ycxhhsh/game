@@ -38,12 +38,30 @@ export const WORLD_OBJECT_KEYS = [
 ];
 
 export const TOOL_SHEETS = [
-    { key: 'lab_tool_hoe', anim: 'lab_tool_hoe', path: 'player_hoe_sheet_unified.png?v=style-lab-v2', frameWidth: 320, frameHeight: 460, frameRate: 8 },
-    { key: 'lab_tool_water', anim: 'lab_tool_water', path: 'player_water_sheet_unified.png?v=style-lab-v2', frameWidth: 320, frameHeight: 460, frameRate: 8 },
-    { key: 'lab_tool_seed', anim: 'lab_tool_seed', path: 'player_seed_sheet_unified.png?v=style-lab-v2', frameWidth: 320, frameHeight: 460, frameRate: 8 }
+    { key: 'lab_tool_hoe', anim: 'lab_tool_hoe', path: 'player_hoe_sheet_unified.png?v=style-lab-v3', frameWidth: 320, frameHeight: 460, frameRate: 10, frames: 8 },
+    { key: 'lab_tool_water', anim: 'lab_tool_water', path: 'player_water_sheet_unified.png?v=style-lab-v3', frameWidth: 320, frameHeight: 460, frameRate: 10, frames: 8 },
+    { key: 'lab_tool_seed', anim: 'lab_tool_seed', path: 'player_seed_sheet_unified.png?v=style-lab-v3', frameWidth: 320, frameHeight: 460, frameRate: 10, frames: 8 }
 ];
 
 export const INTERIOR_BACKGROUND = ['sl_cottage_interior', 'assets/style-lab/interior/cottage-interior.png?v=style-lab-v2'];
+
+export const INTERIOR_TILE_KEYS = [
+    ['interior_floor_a', 'assets/style-lab/interior/tiles/floor_a.png'],
+    ['interior_floor_b', 'assets/style-lab/interior/tiles/floor_b.png'],
+    ['interior_wall', 'assets/style-lab/interior/tiles/wall.png'],
+    ['interior_wall_side', 'assets/style-lab/interior/tiles/wall_side.png']
+];
+
+export const INTERIOR_OBJECT_KEYS = [
+    ['interior_bed', 'assets/style-lab/interior/objects/bed.png'],
+    ['interior_bookshelf', 'assets/style-lab/interior/objects/bookshelf.png'],
+    ['interior_door_mat', 'assets/style-lab/interior/objects/door-mat.png'],
+    ['interior_plant', 'assets/style-lab/interior/objects/plant.png'],
+    ['interior_rocking_chair', 'assets/style-lab/interior/objects/rocking-chair.png'],
+    ['interior_stove', 'assets/style-lab/interior/objects/stove.png'],
+    ['interior_tea_table', 'assets/style-lab/interior/objects/tea-table.png'],
+    ['interior_window', 'assets/style-lab/interior/objects/window.png']
+];
 
 export const PLAYER_SHEETS = [
     { key: 'lab_player_down', anim: 'lab_walk_down', path: 'asset/player_walk_down.png?v=style-lab-v2', frameWidth: 266, frameHeight: 431, frameRate: 6 },

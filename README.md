@@ -8,7 +8,7 @@
   - `public/player_hoe_sheet_unified.png`
   - `public/player_water_sheet_unified.png`
   - `public/player_seed_sheet_unified.png`
-- 三张工具动作 sheet 均为 4 帧横向序列，整体 `1280x460`，单帧 `320x460`，仅用于 viewer 预览，尚未接入 `GameScene.js` 实机动作。
+- 三张工具动作 sheet 已从 4 帧扩展为 8 帧横向序列，整体 `2560x460`，单帧 `320x460`；当前用于 `viewer.html` 与 `style-lab.html` 预览验证，尚未接入正式 `GameScene.js` 实机动作。
 - `viewer.html` 的“当前版本：墨墨与心情树”已更新为匹配当前主角工具动作质感的资源：
   - 墨墨：`public/concepts/current/momo-concept.png`、`public/concepts/current/momo-actions.png`
   - 心情树：`public/concepts/current/heart-tree-concept.png`、`public/concepts/current/heart-tree-stages.png`
@@ -67,19 +67,21 @@
   - `public/player_hoe_sheet_unified.png`
   - `public/player_water_sheet_unified.png`
   - `public/player_seed_sheet_unified.png`
+- 工具动作已重绘为 8 帧横向序列，整体 `2560x460`、单帧 `320x460`，比上一版 4 帧动作更连贯；Style Lab 与 viewer 均已按 8 帧播放。
 - 试验场景中新增轻量种田验证逻辑：按 `1/2/3` 切换锄头、水壶、种子，面向农田按 `E` 或 `Space` 可依次完成普通地块、耕地、湿润耕地、播种小芽的状态变化。工具动作播放时会暂停移动，并用统一底部锚点的动作 sprite 覆盖主角当前位置。
 - 林奶奶摇摇躺椅展示比例已从大画面展示缩小为接近主角体量，阴影、互动半径和碰撞范围同步收窄。
 - 墨墨跟随改为贴地小步跳：停下时稳定落地，移动时仅有 1-2px 的脚步起伏，并使用固定在脚底附近的软阴影强化落地感。
 - 石头、栅栏、小桶、小屋、心情树、林奶奶摇椅等硬物已加入碰撞；小花小草默认不碰撞，避免走路过卡。
 - 自然物摆放规则已收紧：树木禁止出现在水域、农田、小路、房屋入口和水岸缓冲区；石头偏向路边、田边和树根附近；花草以小簇分布，保留至少 5 种树与 8 种花草变体。
-- 新增 Style Lab 专用小屋内部场景 `src/style-lab/StyleLabInteriorScene.js`，背景图位于 `public/assets/style-lab/interior/cottage-interior.png`。靠近室外小屋门按 `Enter` 进屋，室内可走并有床、桌子、炉灶、书架等基础碰撞，门口按 `Enter` 或 `E` 返回室外。
+- 新增 Style Lab 专用小屋内部场景 `src/style-lab/StyleLabInteriorScene.js`。室内已改为与外部地图一致的 64px 网格视角：地板/墙体 tile 位于 `public/assets/style-lab/interior/tiles/`，床、桌子、炉灶、书架、摇摇椅、门垫等家具已拆成独立透明对象，位于 `public/assets/style-lab/interior/objects/`，避免整张背景图与外部地图视角脱节。靠近室外小屋门按 `Enter` 进屋，室内可走并有基础碰撞；底部中央门槛/门垫为可退出区域，按 `Enter` 或 `E` 返回室外。
 - 本轮仍只修改 Style Lab 试验窗口和资源交接说明，正式 `src/scenes/GameScene.js`、正式 `src/scenes/RoomScene.js`、背包数量、体力消耗、作物成长天数和剧情对话均未接入。
 
 ### 验收方式
 - 打开 `http://localhost:5888/viewer.html`，检查“墨墨动作序列”和顶部墨墨预览是否是真正逐帧播放，不再只是切换静态 cutout。
 - 打开 `http://localhost:5888/style-lab.html`，移动主角、停留、靠近林奶奶和心情树，观察墨墨状态切换；检查林奶奶比例、树/石头/硬物碰撞、自然物分布和水岸避让。
 - 在 Style Lab 中按 `1/2/3` 切工具，面向农田按 `E` 或 `Space`，检查耕地、浇水、播种动作和地块状态变化；靠近小屋门按 `Enter` 进入室内，室内按 `Enter` 或 `E` 返回。
-- 资源检查：animated sheet 尺寸为 `640x160`，四角 alpha 为 0，播放时无白底、无明显缩放漂移。
+- 可直接访问 `http://localhost:5888/style-lab.html?interior=1` 单独验收室内场景视角、家具碰撞与出门门槛。
+- 资源检查：墨墨 animated sheet 尺寸为 `640x160`，主角工具 sheet 尺寸为 `2560x460`，室内家具为独立透明 PNG；四角 alpha 为 0，播放时无白底、无明显缩放漂移。
 
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
@@ -154,18 +156,18 @@ npm run dev
 
 ## 🐞 遗留问题与当前难点 (Known Issues / Bugs)
 
-### 🚨 动作帧生成中心点“跳跃”漂移问题 
-**症状**: 当玩家执行“挥舞锄头”时，角色的身体突然变大并发生了瞬间的上下腾空瞬移。
-**原因分析**: 在最后一次的需求中，为了追求极致还原的 2D 逐帧动画（Frame-by-frame），我们让 AI 根据同一主角面貌单独生成了 4 张高清分解动作（高举-挥下-砸地-回拉）。但**由于 AI 无法精确锁死输出图像中的中心锚点与留白边界**，导致这4张图片即使都被裁剪透明化后，其主角所占“画幅的实际比例”与“绝对中心 X/Y”并不在同一个锚点（Pivot）。
-**解决建议**: 需要打开类似 `Aseprite` 或 `TexturePacker` 等帧动画装配软件，通过透明网格肉眼对齐这 4 帧的中心点，输出为一张标准等距的 `SpriteSheet` 长条图，然后再通过 `this.load.spritesheet` 重新挂载使用，即可彻底解决闪烁与漂移！
+### ⚠️ 工具动作帧仍需人工精修
+**当前状态**: 耕地、浇水、播种已重绘为 8 帧横向 sheet，动作连贯性比 4 帧版本明显提升，并已接入 `viewer.html` 与 `style-lab.html`。
+**剩余风险**: AI 生成的逐帧角色仍可能出现轻微脸型、手部、工具位置和粒子边界变化。当前版本适合用于画风与手感验证，进入正式游戏前仍建议用 Aseprite 或 TexturePacker 做一次人工锚点、轮廓和帧间一致性精修。
+**建议方向**: 后续可以在现有 8 帧基础上继续补齐四方向动作，或保留当前主方向动作并用翻转、粒子和轻微位移反馈覆盖早期玩法验证。
 
 ---
 
 ## 🚀 下一步开发计划 (Next Steps & Roadmap)
 
 ### P1 优先级 (Immediate Focus)
-1. **重构主角工具帧动画流 (Fix Player Action Frames)**: 
-   - 解决目前散乱加载的多张动作生发图位移问题。若无法对其进行软件人工锚点修正，请退回上一个稳定版本：即使用统一带水壶的高清主角原图（`player_hd`），通过挂载纯渲染物理层级别的 `Tween` 抖动与特效（粒子飞溅），来“拟态”出各个农具的反馈手感。
+1. **精修主角工具帧动画流 (Polish Player Action Frames)**:
+   - 在当前 8 帧工具 sheet 基础上做人工锚点、轮廓和四方向适配；Style Lab 已可先验证耕地、浇水、播种手感，正式迁回 `GameScene.js` 前需要再做一轮帧间一致性检查。
 2. **林奶奶交互对话框 (Grandma's Typewriter Dialog)**:
    - 全面上线“基于 UI Group 体系拼接底框”，并用 `Phaser.Time.Event` 跑一个定时器，实现每个字符之间 50ms 间隔的逐字淡入显示输出功能。
 3. **情绪系统羁绊交互 (Emotion Cropping & Gifting)**:
@@ -174,4 +176,4 @@ npm run dev
 ### P2 优先级 (Long-term Mechanics)
 1. **日记与天气情绪流**: 核心大饼（未动工）。加入玩家每日主动手写一句话日历的UI功能，依据日历用语好坏，演化第二天的天空滤镜（如下“治愈太阳雨”）。
 2. **邮箱反馈闭环**: 增设木屋旁的邮箱机制，次日必会收到老奶奶的手写信或稀有小树苗。
-3. **室内场景设计 (Interior Scaling)**: 将木屋加上 `E` 键入门判定，并切场景（`SceneManager.switch`）到一座温馨点着暖炉的复古室内 `RoomScene`。
+3. **室内场景正式化 (Interior Production Pass)**: Style Lab 已有可进出的小屋内部试验场景；下一步是把独立家具、碰撞、门槛退出逻辑和温馨陈设迁回正式 `RoomScene`，并补上剧情、对话和可交互物件。

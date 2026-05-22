@@ -9,6 +9,8 @@ window.addEventListener('unhandledrejection', (event) => {
     document.body.dataset.styleLabError = String(event.reason?.message ?? event.reason);
 });
 
+const startInside = new URLSearchParams(window.location.search).has('interior');
+
 const config = {
     type: Phaser.AUTO,
     parent: 'style-lab-root',
@@ -28,7 +30,7 @@ const config = {
         imageLoadType: 'HTMLImageElement',
         maxParallelDownloads: 128
     },
-    scene: [StyleLabScene, StyleLabInteriorScene],
+    scene: startInside ? [StyleLabInteriorScene, StyleLabScene] : [StyleLabScene, StyleLabInteriorScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
