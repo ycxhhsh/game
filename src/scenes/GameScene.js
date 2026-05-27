@@ -29,7 +29,7 @@ export default class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys('W,A,S,D,T,E');
         this.input.keyboard.on('keydown', (e) => {
-            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen) return;
+            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen || this.uiStore.isMailboxOpen) return;
             if (e.key === ' ' || e.key === 'e' || e.key === 'E') this.handleInteract();
             if (e.key === 't' || e.key === 'T') this.passDay();
         });
@@ -129,6 +129,7 @@ export default class GameScene extends Phaser.Scene {
         // 门垫修正坐标到门前
         const doorMat = this.add.ellipse(hx + 96, hy + 196, 40, 20, 0xffa500).setDepth(hy + 192).setAlpha(0.5);
         this.tweens.add({ targets: doorMat, alpha: 0.1, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.createMailbox(hx + 44, hy + 224);
         
         // 调整奶奶位置偏离屋顶，移到屋外旁边
         const gx = hx + 230; const gy = hy + 160;
@@ -300,7 +301,12 @@ export default class GameScene extends Phaser.Scene {
         farm.sprites = [];
 
         if (farm.state === 'tilled' || farm.state === 'watered') {
-            farm.sprites.push(this.add.image(px, py, farm.state).setOrigin(0, 0).setDepth(1));
+            const variant = (x + y) % 2 === 0 ? 'a' : 'b';
+            const tileKey = farm.state === 'watered' ? `farm_tilled_wet_${variant}` : `farm_tilled_${variant}`;
+            farm.sprites.push(this.add.image(px, py, tileKey)
+                .setOrigin(0, 0)
+                .setDepth(1)
+                .setDisplaySize(TILE_SIZE, TILE_SIZE));
         }
         
         if (farm.crop === 1 || farm.crop === 11) {
@@ -351,6 +357,41 @@ export default class GameScene extends Phaser.Scene {
             .setOrigin(0, 0)
             .setDepth(2001)
             .setAlpha(0);
+    }
+
+    createMailbox(x, y) {
+        this.mailboxZone = new Phaser.Geom.Rectangle(x - 38, y - 44, 76, 92);
+        this.mailboxPost = this.add.rectangle(x, y + 30, 8, 52, 0x7c5b41).setDepth(y + 29);
+        this.mailboxBody = this.add.rectangle(x, y, 48, 30, 0xd79b63)
+            .setStrokeStyle(3, 0x6b4b3a)
+            .setDepth(y + 30);
+        this.mailboxDoor = this.add.rectangle(x + 16, y, 12, 22, 0xf0c289)
+            .setStrokeStyle(2, 0x6b4b3a)
+            .setDepth(y + 31);
+        this.mailboxFlag = this.add.rectangle(x - 31, y - 12, 7, 28, 0xd35d6e)
+            .setOrigin(0.5, 1)
+            .setDepth(y + 32);
+        this.mailboxGlow = this.add.ellipse(x, y + 44, 66, 18, 0xffdfa3, 0.18)
+            .setDepth(y + 18)
+            .setAlpha(0);
+        this.tweens.add({
+            targets: this.mailboxGlow,
+            alpha: 0.42,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        this.refreshMailboxVisual();
+    }
+
+    refreshMailboxVisual() {
+        if (!this.mailboxFlag || !this.mailboxGlow) return;
+        const hasUnread = this.gameStore?.hasUnreadMail;
+        this.mailboxFlag
+            .setAngle(hasUnread ? -22 : 0)
+            .setFillStyle(hasUnread ? 0xd35d6e : 0x9a7562);
+        this.mailboxGlow.setVisible(Boolean(hasUnread));
     }
 
     createHeartTree() {
@@ -576,6 +617,12 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
+        if (this.mailboxZone && Phaser.Geom.Rectangle.Contains(this.mailboxZone, this.player.x, this.player.y)) {
+            EventBus.emit(EMOTION_EVENTS.OPEN_MAILBOX);
+            this.refreshMailboxVisual();
+            return;
+        }
+
         // 门锁交互检测 (进门事件)
         let doorDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.grandmaHouse.x + 130, this.grandmaHouse.y + 330);
         if (doorDist <= 80 && this.player.currentDir === 'up') {
@@ -731,7 +778,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.isActing || this.uiStore.isInventoryOpen || this.uiStore.isDialogOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen) return;
+        this.refreshMailboxVisual();
+        if (this.isActing || this.uiStore.isInventoryOpen || this.uiStore.isDialogOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen || this.uiStore.isMailboxOpen) return;
 
         // --- 控制与移动 ---
         this.player.setVelocity(0);
@@ -802,6 +850,7 @@ export default class GameScene extends Phaser.Scene {
                 this.gameStore.advanceEmotionDay();
                 this.currentWeather = this.gameStore.weather;
                 this.refreshHeartTreeVisual();
+                this.refreshMailboxVisual();
                 this.updateMomoVisual();
                 for (let key in this.farmStates) {
                     let farm = this.farmStates[key];

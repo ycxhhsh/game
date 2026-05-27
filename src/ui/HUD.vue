@@ -4,6 +4,7 @@
       <div class="time-panel">
         <span class="time-text">{{ gameStore.time }}</span>
         <span class="weather-text">{{ weatherLabel }}</span>
+        <span v-if="gameStore.hasUnreadMail" class="mail-dot">信</span>
       </div>
 
       <button class="battery-panel" type="button" @click="openDiary">
@@ -42,7 +43,7 @@
 
     <div class="toolbar">
       <div class="hint">
-        Q 手账 / H 心情树 / I 背包 / E 互动 / T 跳到明天
+        Q 手账 / H 心情树 / M 信箱 / I 背包 / E 互动 / T 跳到明天
       </div>
       <div class="tool-slot" :class="{ active: uiStore.currentTool === 1 }" @click="uiStore.setTool(1)">
         <img src="/asset/icon_hoe.png" alt="Hoe" />
@@ -142,6 +143,19 @@ const openHeartTree = () => {
   font-size: 13px;
   font-weight: 800;
   color: #826f63;
+}
+
+.mail-dot {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: #d35d6e;
+  color: #fff8ec;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .battery-panel {

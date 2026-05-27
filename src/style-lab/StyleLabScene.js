@@ -446,8 +446,7 @@ export default class StyleLabScene extends Phaser.Scene {
         if (farm.state === 'normal') ground.setTexture((x + y) % 2 === 0 ? 'tile_dirt_a' : 'tile_dirt_b');
         if (farm.state === 'tilled') ground.setTexture((x + y) % 2 === 0 ? 'tile_tilled_a' : 'tile_tilled_b');
         if (farm.state === 'watered') {
-            ground.setTexture((x + y) % 2 === 0 ? 'tile_tilled_a' : 'tile_tilled_b');
-            ground.setTint(0x9ecad1);
+            ground.setTexture((x + y) % 2 === 0 ? 'tile_tilled_wet_a' : 'tile_tilled_wet_b');
         }
 
         if (farm.marker) {

@@ -83,6 +83,31 @@
 - 可直接访问 `http://localhost:5888/style-lab.html?interior=1` 单独验收室内场景视角、家具碰撞与出门门槛。
 - 资源检查：墨墨 animated sheet 尺寸为 `640x160`，主角工具 sheet 尺寸为 `2560x460`，室内家具为独立透明 PNG；四角 alpha 为 0，播放时无白底、无明显缩放漂移。
 
+## 2026-05-24 开发计划调整与交互链路思考
+
+### 主角工具帧动画暂存
+- 当前 8 帧主角工具动作 sheet 已作为本轮基准版本冻结：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 这三组资源已在 `viewer.html` 与 `style-lab.html` 中完成可视化验收入口接入，适合作为画风、底部锚点和操作手感验证用的当前稳定版。
+- 后续暂不把工具帧精修列为最高优先级，也暂不优先迁入正式 `src/scenes/GameScene.js`。进入正式生产前，再集中用 Aseprite 或 TexturePacker 做人工锚点、轮廓、手部和帧间一致性精修。
+
+### 交互对话框链路
+- 正式入口已存在 Vue/Pinia 对话链路：`src/ui/DialogueUI.vue` 负责逐字显示，`src/store/uiStore.js` 的 `showDialogue()` 管理打开状态，`src/ui/App.vue` 监听 `SHOW_DIALOGUE` 事件。
+- 正式 `src/scenes/GameScene.js` 的林奶奶交互已能在靠近后按 `E` / `Space` 触发对话，并根据是否持有作物进入不同感谢文本；对话文字当前以 50ms 间隔逐字显示。
+- 下一步需要把同一条交互体验同步到 Style Lab：在 `src/style-lab/StyleLabScene.js` 中为林奶奶增加靠近检测与 `E` / `Space` 触发的轻量对话验证。Style Lab 目前仍只展示林奶奶动作和距离触发的墨墨状态，不应在文档中误写成已完成 Lab 对话。
+
+### 日记与天气情绪流方案
+- 日记与天气情绪流已有原型，当前进入产品化整理阶段：`src/ui/DiaryUI.vue` 已支持情绪图景选择、强度滑杆、短句记录和“明天天气”预览。
+- `src/store/gameStore.js` 的 `recordMoodEntry()` 已把日记输入写入 `moodEntries`，并影响 `tomorrowWeather`、心情树状态、墨墨状态与社交电量；`advanceEmotionDay()` 会在跨天时应用明日天气并推进心情树衰减/恢复。
+- 后续方案重点应从“做一个日记入口”调整为“整理每日闭环”：当天写一句或选择情绪，次日天气/心情树/墨墨状态给出柔性反馈，再通过自我照护、林奶奶对话或邮箱回信形成不惩罚玩家的疗愈循环。
+
+### 更新后的优先级判断
+- P1 先聚焦：交互对话框体验打磨、Style Lab 对话同步、日记/天气/心情树反馈闭环梳理。
+- 主角工具帧保留为当前基准版本；除非正式迁回 `GameScene.js` 或出现明显锚点问题，否则先不继续扩张动作帧资产工作量。
+- 室内场景正式化、邮箱反馈和更复杂的情绪作物/赠礼分支仍放在后续节奏中推进。
+
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
 我们完全摒弃了传统的“疲劳值”、“主线枯燥任务”与“时间淘汰机制”，鼓励玩家伴随着每天随机的治愈天气，在海岛上自在发呆、种田以及随心所欲地去与留守的林奶奶建立无压力的情感羁绊。
@@ -150,7 +175,7 @@ npm run dev
 
 ### 4. 林奶奶的陪伴机制初版 (Grandma Lin)
 - 重写并设计了高分辨率的红色砖木房子、奶奶独立肖像与动态木制摇椅。
-- 奶奶的交互碰撞箱已建立，但等待接入真实的“逐字打印式”羁绊对话。
+- 奶奶的交互碰撞箱已建立，正式入口已能通过 `SHOW_DIALOGUE` 事件触发逐字打印式羁绊对话；Style Lab 仍待补同等交互验证。
 
 ---
 
@@ -166,14 +191,14 @@ npm run dev
 ## 🚀 下一步开发计划 (Next Steps & Roadmap)
 
 ### P1 优先级 (Immediate Focus)
-1. **精修主角工具帧动画流 (Polish Player Action Frames)**:
-   - 在当前 8 帧工具 sheet 基础上做人工锚点、轮廓和四方向适配；Style Lab 已可先验证耕地、浇水、播种手感，正式迁回 `GameScene.js` 前需要再做一轮帧间一致性检查。
-2. **林奶奶交互对话框 (Grandma's Typewriter Dialog)**:
-   - 全面上线“基于 UI Group 体系拼接底框”，并用 `Phaser.Time.Event` 跑一个定时器，实现每个字符之间 50ms 间隔的逐字淡入显示输出功能。
-3. **情绪系统羁绊交互 (Emotion Cropping & Gifting)**:
-   - 若玩家走到林奶奶面前并按下 `SPACE` / `E` 时，检测背包：如果此时背包中正持有番茄等【情绪满载作物】，触发林奶奶特定的“惊喜/感谢”分支剧情对话，并隐藏后台增加隐性情感值。
+1. **交互对话框体验打磨与 Style Lab 同步 (Dialog Production Pass)**:
+   - 正式入口已有 `DialogueUI.vue`、`uiStore.showDialogue()` 与 `SHOW_DIALOGUE` 事件链路，林奶奶交互能触发逐字对话；下一步重点是修正/打磨点击、空格、回车的推进体验，并把靠近林奶奶按 `E` / `Space` 弹出对话的轻量验证同步到 `src/style-lab/StyleLabScene.js`。
+2. **日记与天气情绪流产品化 (Diary & Weather Emotion Loop)**:
+   - 基于现有 `DiaryUI.vue` 与 `gameStore.recordMoodEntry()`，梳理“今日记录 -> 明日天气 -> 心情树/墨墨反馈 -> 自我照护恢复”的每日闭环，让情绪输入产生温柔反馈，而不是惩罚或任务压力。
+3. **主角工具帧动画基准冻结 (Player Tool Frames Baseline)**:
+   - 当前 8 帧工具 sheet 暂存为可验收基准版本，继续用于 `viewer.html` 与 `style-lab.html` 的手感验证；正式迁回 `GameScene.js` 前再做人工锚点、轮廓和帧间一致性精修。
 
 ### P2 优先级 (Long-term Mechanics)
-1. **日记与天气情绪流**: 核心大饼（未动工）。加入玩家每日主动手写一句话日历的UI功能，依据日历用语好坏，演化第二天的天空滤镜（如下“治愈太阳雨”）。
-2. **邮箱反馈闭环**: 增设木屋旁的邮箱机制，次日必会收到老奶奶的手写信或稀有小树苗。
+1. **情绪系统羁绊交互 (Emotion Cropping & Gifting)**: 在林奶奶对话链路稳定后，再扩展作物赠礼分支、情绪作物识别和隐性情感值反馈。
+2. **邮箱反馈闭环**: 增设木屋旁的邮箱机制，让次日反馈承接玩家前一天的日记、天气或林奶奶互动，可收到手写信、小树苗或低压力提示。
 3. **室内场景正式化 (Interior Production Pass)**: Style Lab 已有可进出的小屋内部试验场景；下一步是把独立家具、碰撞、门槛退出逻辑和温馨陈设迁回正式 `RoomScene`，并补上剧情、对话和可交互物件。

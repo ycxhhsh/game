@@ -10,6 +10,12 @@ const HEART_TREE_STAGES = {
   blooming: { label: '开花', min: 85, color: '#f0a6b7' }
 };
 
+const WEATHER_LABELS = {
+  sunny: '晴空',
+  rainy: '治愈阵雨',
+  foggy: '薄雾'
+};
+
 const SELF_CARE = {
   weed: {
     metric: 'weed',
@@ -57,10 +63,16 @@ const SELF_CARE = {
 
 const NEGATIVE_EMOTIONS = new Set(['cloud', 'tangle', 'heavy', 'spark', 'rain', 'tired']);
 
+const createInitialMailboxState = () => ({
+  letters: [],
+  lastGeneratedDay: 0
+});
+
 const createInitialEmotionState = () => ({
   currentDay: 1,
   socialBattery: 100,
   moodEntries: [],
+  mailbox: createInitialMailboxState(),
   heartTree: {
     health: 55,
     stage: 'recovering',
@@ -137,6 +149,7 @@ export const useGameStore = defineStore('game', {
       if (!state.emotionMetrics.moodEntriesCount) return 0;
       return Math.round((state.emotionMetrics.compoundEntries / state.emotionMetrics.moodEntriesCount) * 100);
     },
+    hasUnreadMail: (state) => Boolean(state.mailbox?.letters?.some((letter) => !letter.read)),
     selfCareConsistency: (state) => {
       const denominator = Math.min(7, Math.max(1, state.currentDay));
       return Math.round((Math.min(state.heartTree.careStreak, 7) / denominator) * 100);
@@ -184,6 +197,11 @@ export const useGameStore = defineStore('game', {
         this.currentDay = saved.currentDay ?? initial.currentDay;
         this.socialBattery = saved.socialBattery ?? initial.socialBattery;
         this.moodEntries = Array.isArray(saved.moodEntries) ? saved.moodEntries : initial.moodEntries;
+        this.mailbox = {
+          ...createInitialMailboxState(),
+          ...(saved.mailbox || {}),
+          letters: Array.isArray(saved.mailbox?.letters) ? saved.mailbox.letters : []
+        };
         this.heartTree = { ...initial.heartTree, ...(saved.heartTree || {}) };
         this.momo = { ...initial.momo, ...(saved.momo || {}) };
         this.emotionMetrics = {
@@ -208,6 +226,10 @@ export const useGameStore = defineStore('game', {
         currentDay: this.currentDay,
         socialBattery: this.socialBattery,
         moodEntries: this.moodEntries.slice(0, 30),
+        mailbox: {
+          ...this.mailbox,
+          letters: (this.mailbox?.letters || []).slice(0, 12)
+        },
         heartTree: this.heartTree,
         momo: this.momo,
         emotionMetrics: this.emotionMetrics,
@@ -270,6 +292,62 @@ export const useGameStore = defineStore('game', {
       );
       this.persistEmotionState();
       return entry;
+    },
+    generateDailyMailboxLetter({ sourceDay = this.currentDay, receivedDay = this.currentDay + 1, weather = this.tomorrowWeather, careCount = this.heartTree.careToday } = {}) {
+      const mailbox = {
+        ...createInitialMailboxState(),
+        ...(this.mailbox || {}),
+        letters: Array.isArray(this.mailbox?.letters) ? this.mailbox.letters : []
+      };
+      if (mailbox.lastGeneratedDay >= sourceDay) return null;
+
+      const entries = this.moodEntries.filter((entry) => entry.day === sourceDay);
+      if (!entries.length && careCount <= 0) return null;
+
+      const latestEntry = entries[0] || null;
+      const hasNegative = entries.some((entry) => entry.hasNegative);
+      const labels = latestEntry?.emotions?.map((emotion) => emotion.label).filter(Boolean).join('、') || '';
+      const note = latestEntry?.note ? `\n\n你写下的那句“${latestEntry.note.slice(0, 34)}”，我替你认真收好了。` : '';
+      const weatherLabel = WEATHER_LABELS[weather] || WEATHER_LABELS.sunny;
+      const careLine = careCount > 0
+        ? `你还照顾了自己 ${careCount} 次，这不是小事。`
+        : '就算只是把感觉放进手账里，也已经是一种照顾。';
+      const tone = hasNegative ? (weather === 'foggy' ? 'mist' : 'rain') : (careCount > 0 ? 'care' : 'sun');
+      const title = hasNegative
+        ? `第 ${receivedDay} 天，慢一点也可以`
+        : `第 ${receivedDay} 天，有光落在纸页上`;
+      const opening = hasNegative
+        ? `昨天你看见了${labels || '一些不容易说清的感觉'}。今天的${weatherLabel}会替你把世界调暗一点，留出慢慢呼吸的位置。`
+        : `昨天的${labels || '一点轻盈'}被记下来了。今天的${weatherLabel}会把那点光铺开，不催你去做更多。`;
+      const body = `${opening}${note}\n\n${careLine}\n\n-- 林奶奶`;
+      const createdAt = Date.now();
+      const letter = {
+        id: `mail-${sourceDay}-${createdAt}`,
+        day: receivedDay,
+        title,
+        body,
+        tone,
+        source: 'grandma',
+        read: false,
+        createdAt
+      };
+
+      this.mailbox = {
+        letters: [letter, ...mailbox.letters].slice(0, 12),
+        lastGeneratedDay: sourceDay
+      };
+      this.persistEmotionState();
+      return letter;
+    },
+    markMailboxRead(id) {
+      if (!this.mailbox?.letters?.length) return;
+      this.mailbox = {
+        ...this.mailbox,
+        letters: this.mailbox.letters.map((letter) => (
+          letter.id === id ? { ...letter, read: true } : letter
+        ))
+      };
+      this.persistEmotionState();
     },
     performSelfCare(type, payload = {}) {
       const config = SELF_CARE[type];
@@ -369,6 +447,12 @@ export const useGameStore = defineStore('game', {
       return this.momo;
     },
     advanceEmotionDay() {
+      this.generateDailyMailboxLetter({
+        sourceDay: this.currentDay,
+        receivedDay: this.currentDay + 1,
+        weather: this.tomorrowWeather,
+        careCount: this.heartTree.careToday
+      });
       this.currentDay += 1;
       this.weather = this.tomorrowWeather;
       this.tomorrowWeather = 'sunny';

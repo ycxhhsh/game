@@ -4,6 +4,7 @@
     <InventoryUI v-if="uiStore.isInventoryOpen" />
     <DiaryUI v-if="uiStore.isDiaryOpen" />
     <HeartTreeUI v-if="uiStore.isHeartTreeOpen" />
+    <MailboxUI v-if="uiStore.isMailboxOpen" />
     <DialogueUI v-if="uiStore.isDialogOpen" />
     <MomoToast />
   </div>
@@ -17,6 +18,7 @@ import HUD from './HUD.vue';
 import InventoryUI from './InventoryUI.vue';
 import DiaryUI from './DiaryUI.vue';
 import HeartTreeUI from './HeartTreeUI.vue';
+import MailboxUI from './MailboxUI.vue';
 import DialogueUI from './DialogueUI.vue';
 import MomoToast from './MomoToast.vue';
 import { EventBus, EMOTION_EVENTS } from '../events/EventBus';
@@ -45,6 +47,9 @@ onMounted(() => {
   EventBus.on(EMOTION_EVENTS.OPEN_HEART_TREE, () => {
     uiStore.openHeartTree();
   });
+  EventBus.on(EMOTION_EVENTS.OPEN_MAILBOX, () => {
+    uiStore.openMailbox();
+  });
 
   window.addEventListener('keydown', (e) => {
     if (uiStore.isDialogOpen) {
@@ -64,6 +69,7 @@ onMounted(() => {
     if (e.key === 'I' || e.key === 'i') uiStore.toggleInventory();
     if (e.key === 'Q' || e.key === 'q') uiStore.toggleDiary();
     if (e.key === 'H' || e.key === 'h') uiStore.toggleHeartTree();
+    if (e.key === 'M' || e.key === 'm') uiStore.toggleMailbox();
     if (e.key === 'Escape') uiStore.closeAll();
   });
 });

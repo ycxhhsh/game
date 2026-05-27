@@ -8,6 +8,8 @@ export const TILE_KEYS = [
     ['tile_dirt_b', 'assets/style-lab/tiles/dirt_b.png'],
     ['tile_tilled_a', 'assets/style-lab/tiles/tilled_a.png'],
     ['tile_tilled_b', 'assets/style-lab/tiles/tilled_b.png'],
+    ['tile_tilled_wet_a', 'assets/style-lab/tiles/tilled_wet_a.png'],
+    ['tile_tilled_wet_b', 'assets/style-lab/tiles/tilled_wet_b.png'],
     ['tile_water_1', 'assets/style-lab/tiles/water_1.png'],
     ['tile_water_2', 'assets/style-lab/tiles/water_2.png'],
     ['tile_path_a', 'assets/style-lab/tiles/path_a.png'],
