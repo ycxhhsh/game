@@ -21,6 +21,10 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('flower_tulip', 'flower_tulip.png');
         this.load.image('grass_hd', 'grass_hd.png');
         this.load.image('grass_weed', 'grass_weed.png');
+        this.load.image('farm_tilled_a', 'assets/style-lab/tiles/tilled_a.png');
+        this.load.image('farm_tilled_b', 'assets/style-lab/tiles/tilled_b.png');
+        this.load.image('farm_tilled_wet_a', 'assets/style-lab/tiles/tilled_wet_a.png');
+        this.load.image('farm_tilled_wet_b', 'assets/style-lab/tiles/tilled_wet_b.png');
         this.load.image('player_hd', 'player_hd.png');
         this.load.image('player_hd_up', 'player_hd_up.png');
         this.load.image('hat_straw', 'hat_straw.png');

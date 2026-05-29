@@ -2,197 +2,670 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>角色动画序列展示页 (Animation Viewer)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心屿小镇资产 Viewer</title>
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: #1f2222;
+            --panel: #2b302d;
+            --panel-soft: #353a35;
+            --line: #556253;
+            --text: #f3eadc;
+            --muted: #c9bca7;
+            --green: #a8e6cf;
+            --rose: #ffb0b5;
+            --gold: #f7d77a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            margin: 0; padding: 40px;
-            background: #1e1e24; color: #fff;
-            display: flex; flex-direction: column; align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 36px;
+            background:
+                radial-gradient(circle at top left, rgba(168, 230, 207, 0.10), transparent 32rem),
+                linear-gradient(180deg, #1d2020 0%, var(--bg) 100%);
+            color: var(--text);
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
         }
+
+        main {
+            width: min(1280px, 100%);
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
         h1 {
-            color: #a8e6cf;
-            margin-bottom: 5px;
+            color: var(--green);
+            font-size: 34px;
+            letter-spacing: 0;
         }
-        p {
-            color: #bbbbbb;
-            margin-bottom: 40px;
+
+        .lead {
+            color: var(--muted);
+            margin-top: 8px;
+            line-height: 1.6;
         }
+
+        section {
+            margin-top: 34px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(168, 230, 207, 0.25);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--rose);
+            font-size: 24px;
+        }
+
+        .section-note {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
         .container {
-            display: flex; gap: 40px; 
-            background: #2b2b36; padding: 40px 60px; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        }
-        .card {
-            display: flex; flex-direction: column; align-items: center;
-            background: #363644;
-            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            background: rgba(43, 48, 45, 0.92);
+            padding: 26px;
+            border: 1px solid rgba(168, 230, 207, 0.14);
             border-radius: 12px;
-            transition: transform 0.2s;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.28);
         }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--panel-soft);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
         }
+
         .canvas-wrap {
-            width: 140px; height: 240px; 
+            width: 140px;
+            height: 240px;
             background: repeating-conic-gradient(#80808033 0% 25%, transparent 0% 50%) 50% / 20px 20px;
             border-radius: 8px;
-            display: flex; justify-content: center; align-items: flex-end;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
             padding-bottom: 10px;
             border: 2px solid #5c5470;
         }
-        canvas {
+
+        .momo-wrap {
+            height: 180px;
+        }
+
+        .grandma-wrap {
+            width: 180px;
+            height: 240px;
+        }
+
+        canvas,
+        img.pixel {
             image-rendering: -moz-crisp-edges;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
-            image-rendering: pixelated; /* 完美保留边缘 */
+            image-rendering: pixelated;
         }
-        h2 { font-size: 16px; margin-top: 20px; color: #ffb0b5; margin-bottom: 0;}
-        .dims { font-size: 12px; color: #888; margin-top: 5px; }
+
+        .card h3 {
+            font-size: 15px;
+            margin-top: 14px;
+            color: var(--gold);
+            text-align: center;
+        }
+
+        .dims {
+            font-size: 12px;
+            color: #9a9a9a;
+            margin-top: 5px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .concept-card {
+            background: var(--panel);
+            border: 1px solid rgba(168, 230, 207, 0.16);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .concept-card img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        .caption {
+            padding: 13px 15px 15px;
+        }
+
+        .caption h3 {
+            margin: 0 0 5px;
+            color: var(--gold);
+            font-size: 17px;
+        }
+
+        .caption p {
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .cutout-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .cutout-card {
+            background: var(--panel);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .cutout-preview {
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: repeating-conic-gradient(#ffffff1f 0% 25%, #0000001c 0% 50%) 50% / 18px 18px;
+        }
+
+        .cutout-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .cutout-card h3 {
+            padding: 9px 10px 11px;
+            color: var(--gold);
+            font-size: 13px;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .motion-preview {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 22px;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 20px;
+            background: rgba(43, 48, 45, 0.92);
+            border: 1px solid rgba(168, 230, 207, 0.14);
+            border-radius: 12px;
+        }
+
+        .motion-stage {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 2px solid #5c5470;
+            background:
+                linear-gradient(180deg, rgba(168, 230, 207, 0.10), rgba(247, 215, 122, 0.08)),
+                repeating-conic-gradient(#ffffff18 0% 25%, #00000018 0% 50%) 50% / 18px 18px;
+        }
+
+        .motion-stage canvas {
+            width: 130px;
+            height: 130px;
+            image-rendering: pixelated;
+        }
+
+        .motion-copy h3 {
+            color: var(--gold);
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .motion-copy p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 920px) {
+            body {
+                padding: 22px;
+            }
+
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cutout-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .motion-preview {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>🏃‍♂️ 主角动态序列独立画廊</h1>
-    <p>四向独立像素帧·裸载渲染脱机预览板 (FrameRate ≅ 6 FPS)</p>
-    
-    <div class="container">
-        <!-- Up -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <!-- Scale width by roughly 0.45 just for visual alignment -->
-                <canvas id="cvs-up" width="231" height="394" style="width: 104px; height: 177px;"></canvas>
-            </div>
-            <h2>背面 (Up)</h2>
-            <div class="dims">231 x 394</div>
+<main>
+    <header>
+        <h1>心屿小镇资产 Viewer</h1>
+        <p class="lead">用于查看角色动画、墨墨与心情树的当前可落地版，以及保留的精美参考稿。当前优先参考 current 资产。</p>
+    </header>
+
+    <section>
+        <div class="section-head">
+            <h2>当前版本：墨墨与心情树</h2>
+            <p class="section-note">更少颜色、更大像素、更接近当前原型可落地的视觉方向。</p>
         </div>
-
-        <!-- Down -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-down" width="266" height="431" style="width: 120px; height: 194px;"></canvas>
-            </div>
-            <h2>正面 (Down)</h2>
-            <div class="dims">266 x 431</div>
+        <div class="concept-grid">
+            <article class="concept-card">
+                <img src="/concepts/current/momo-concept.png" alt="墨墨概念总览">
+                <div class="caption">
+                    <h3>墨墨概念</h3>
+                    <p>保留变色龙伙伴的情绪状态，但降低插画细节，方便改写成 32x32 或 48x48 游戏精灵。</p>
+                </div>
+            </article>
+            <article class="concept-card">
+                <img src="/concepts/current/momo-actions.png" alt="墨墨行动效果">
+                <div class="caption">
+                    <h3>墨墨行动</h3>
+                    <p>活跃、困倦、蜷缩、呼吸、抱抱、蒲公英引导，动作轮廓优先于精致渲染。</p>
+                </div>
+            </article>
+            <article class="concept-card">
+                <img src="/concepts/current/heart-tree-concept.png" alt="心情树概念总览">
+                <div class="caption">
+                    <h3>心情树概念</h3>
+                    <p>树冠、树干、根系、杂草和花朵都压成更朴素的像素块，避免过度精美。</p>
+                </div>
+            </article>
+            <article class="concept-card">
+                <img src="/concepts/current/heart-tree-stages.png" alt="心情树阶段效果">
+                <div class="caption">
+                    <h3>心情树阶段</h3>
+                    <p>六个情绪阶段保持可读差异，但把光效和材质细节压低到原型可接受程度。</p>
+                </div>
+            </article>
         </div>
+    </section>
 
-        <!-- Left -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-left" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
-            </div>
-            <h2>左转 (Left)</h2>
-            <div class="dims">251 x 446</div>
+    <section>
+        <div class="section-head">
+            <h2>当前版本：透明候选素材</h2>
+            <p class="section-note">已抠图、裁切并降到更接近游戏精灵的尺寸。</p>
         </div>
-
-        <!-- Right -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-right" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
+        <div class="motion-preview">
+            <div class="motion-stage">
+                <canvas id="momo-motion-canvas" width="160" height="160" aria-label="墨墨逐帧动作循环预览"></canvas>
             </div>
-            <h2>右转 (Right)</h2>
-            <div class="dims">251 x 446</div>
-        </div>
-    </div>
-
-    <h1 style="margin-top: 60px;">👩‍🌾 高清交互动作储备 (Tool Actions)</h1>
-    <p>剥离至脱机库保存的劳作帧集</p>
-
-    <div class="container">
-        <!-- Hoe -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-hoe" width="148" height="241" style="width: 110px; height: 180px;"></canvas>
+            <div class="motion-copy">
+                <h3 id="momo-motion-label">墨墨逐帧循环：活跃跟随</h3>
+                <p>这里预览 current animated sheet：同一动作内部有跳步、呼吸、蜷缩、抱抱和蒲公英粒子的逐帧变化，Style Lab 也会按场景状态切换。</p>
             </div>
-            <h2>耕地 (Hoeing)</h2>
-            <div class="dims">148 x 241</div>
         </div>
+        <div class="cutout-grid">
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-active-follow.png" alt="墨墨活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-sleepy-yawn.png" alt="墨墨困倦打哈欠"></div><h3>墨墨 困倦打哈欠</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-low-energy-curled.png" alt="墨墨低能量蜷缩"></div><h3>墨墨 低能量蜷缩</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-silent-breathing.png" alt="墨墨沉默呼吸"></div><h3>墨墨 沉默呼吸</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-hug-ready.png" alt="墨墨抱抱陪伴"></div><h3>墨墨 抱抱陪伴</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/momo-dandelion-breath.png" alt="墨墨蒲公英呼吸"></div><h3>墨墨 蒲公英呼吸</h3></article>
 
-        <!-- Water -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-water" width="138" height="193" style="width: 110px; height: 154px;"></canvas>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-wilted-fog.png" alt="心情树枯萎灰雾"></div><h3>心情树 枯萎灰雾</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-recovering-leaves.png" alt="心情树恢复嫩叶"></div><h3>心情树 恢复嫩叶</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-healthy-lush.png" alt="心情树健康茂盛"></div><h3>心情树 健康茂盛</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-healing-blossom.png" alt="心情树治愈花开"></div><h3>心情树 治愈花开</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-reality-echo-roots.png" alt="心情树现实回响"></div><h3>心情树 现实回响</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/current/cutouts/heart-tree-snowstorm-deep-roots.png" alt="心情树深根暖光"></div><h3>心情树 深根暖光</h3></article>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>墨墨动作序列</h2>
+            <p class="section-note">六组 4 帧横向序列，基于当前墨墨形象增强逐帧变化，用于 viewer 与 Style Lab 预览。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-active" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>活跃跟随</h3>
+                <div class="dims">160 x 160</div>
             </div>
-            <h2>浇水 (Watering)</h2>
-            <div class="dims">138 x 193</div>
-        </div>
-
-        <!-- Seed -->
-        <div class="card">
-            <div class="canvas-wrap">
-                <canvas id="cvs-seed" width="150" height="250" style="width: 110px; height: 183px;"></canvas>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-sleepy" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>困倦打哈欠</h3>
+                <div class="dims">160 x 160</div>
             </div>
-            <h2>播种 (Seeding - Single Frame)</h2>
-            <div class="dims">静止原画</div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-curled" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>低能量蜷缩</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-silent" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>沉默呼吸</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-hug" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>抱抱陪伴</h3>
+                <div class="dims">160 x 160</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap momo-wrap">
+                    <canvas id="cvs-momo-breath" width="160" height="160" style="width: 120px; height: 120px;"></canvas>
+                </div>
+                <h3>蒲公英呼吸</h3>
+                <div class="dims">160 x 160</div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Frame Rendering Core Script -->
-    <script>
-        const FPS = 6;
-        const frameInterval = 1000 / FPS;
+    <section>
+        <div class="section-head">
+            <h2>林奶奶动作序列</h2>
+            <p class="section-note">摇摇躺椅坐姿与站立姿各 4 帧轻动作循环，仅用于 viewer 展示。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap grandma-wrap">
+                    <canvas id="cvs-grandma-rocking" width="240" height="320" style="width: 150px; height: 200px;"></canvas>
+                </div>
+                <h3>摇摇躺椅</h3>
+                <div class="dims">240 x 320</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap grandma-wrap">
+                    <canvas id="cvs-grandma-standing" width="240" height="320" style="width: 150px; height: 200px;"></canvas>
+                </div>
+                <h3>站立姿</h3>
+                <div class="dims">240 x 320</div>
+            </div>
+        </div>
+    </section>
 
-        /**
-         * @param canvasId 绑定的 Canvas节点
-         * @param imgSrc 图集路径
-         * @param frames 总帧数
-         * @param fWidth 每帧宽
-         * @param fHeight 每帧高
-         */
-        function attachSprite(canvasId, imgSrc, frames, fWidth, fHeight) {
-            const canvas = document.getElementById(canvasId);
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.src = imgSrc;
+    <section>
+        <div class="section-head">
+            <h2>精美参考稿：墨墨概念图与行动效果</h2>
+            <p class="section-note">上一版作为情绪方向参考保留，不作为当前游戏接入优先稿。</p>
+        </div>
+        <div class="concept-grid">
+            <article class="concept-card">
+                <img src="/concepts/momo-concept-overview.png" alt="墨墨概念总览">
+                <div class="caption">
+                    <h3>墨墨概念总览</h3>
+                    <p>主形象、情绪颜色与小镇陪伴氛围，用于确认变色龙伙伴的基础视觉语言。</p>
+                </div>
+            </article>
+            <article class="concept-card">
+                <img src="/concepts/momo-action-effects.png" alt="墨墨六种行动效果">
+                <div class="caption">
+                    <h3>墨墨六种行动效果</h3>
+                    <p>活跃跟随、困倦打哈欠、低能量蜷缩、沉默呼吸、抱抱陪伴、蒲公英呼吸引导。</p>
+                </div>
+            </article>
+        </div>
+    </section>
 
-            let currentFrame = 0;
-            let lastUpdate = performance.now();
+    <section>
+        <div class="section-head">
+            <h2>精美参考稿：心情树情绪阶段效果</h2>
+            <p class="section-note">保留较完整的概念氛围，用于后续美术升级参考。</p>
+        </div>
+        <div class="concept-grid">
+            <article class="concept-card">
+                <img src="/concepts/heart-tree-concept-overview.png" alt="心情树概念总览">
+                <div class="caption">
+                    <h3>心情树概念总览</h3>
+                    <p>后院核心象征物，展示根系、花朵、杂草、天气气场与照护道具的关系。</p>
+                </div>
+            </article>
+            <article class="concept-card">
+                <img src="/concepts/heart-tree-emotion-stages.png" alt="心情树六种阶段效果">
+                <div class="caption">
+                    <h3>心情树六种阶段效果</h3>
+                    <p>枯萎灰雾、恢复嫩叶、健康茂盛、治愈花开、现实回响落根、暴风雪后深根暖光。</p>
+                </div>
+            </article>
+        </div>
+    </section>
 
-            img.onload = () => {
-                function render(time) {
-                    if (time - lastUpdate > frameInterval) {
-                        currentFrame = (currentFrame + 1) % frames;
-                        lastUpdate = time;
-                        
-                        ctx.clearRect(0, 0, fWidth, fHeight);
-                        // canvas crop params: source(x,y,w,h) -> dest(x,y,w,h)
-                        ctx.drawImage(img, currentFrame * fWidth, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
-                    }
-                    requestAnimationFrame(render);
+    <section>
+        <div class="section-head">
+            <h2>精美参考稿：透明候选素材</h2>
+            <p class="section-note">上一版抠图素材仍可参考，但当前优先使用 current 资产。</p>
+        </div>
+        <div class="cutout-grid">
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-active-follow.png" alt="墨墨活跃跟随"></div><h3>墨墨 活跃跟随</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-sleepy-yawn.png" alt="墨墨困倦打哈欠"></div><h3>墨墨 困倦打哈欠</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-low-energy-curled.png" alt="墨墨低能量蜷缩"></div><h3>墨墨 低能量蜷缩</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-silent-breathing.png" alt="墨墨沉默呼吸"></div><h3>墨墨 沉默呼吸</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-hug-ready.png" alt="墨墨抱抱陪伴"></div><h3>墨墨 抱抱陪伴</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/momo-dandelion-breath.png" alt="墨墨蒲公英呼吸"></div><h3>墨墨 蒲公英呼吸</h3></article>
+
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-wilted-fog.png" alt="心情树枯萎灰雾"></div><h3>心情树 枯萎灰雾</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-recovering-leaves.png" alt="心情树恢复嫩叶"></div><h3>心情树 恢复嫩叶</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-healthy-lush.png" alt="心情树健康茂盛"></div><h3>心情树 健康茂盛</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-healing-blossom.png" alt="心情树治愈花开"></div><h3>心情树 治愈花开</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-reality-echo-roots.png" alt="心情树现实回响落根"></div><h3>心情树 现实回响</h3></article>
+            <article class="cutout-card"><div class="cutout-preview"><img class="pixel" src="/concepts/cutouts/heart-tree-snowstorm-deep-roots.png" alt="心情树暴风雪后深根暖光"></div><h3>心情树 深根暖光</h3></article>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>主角动画序列</h2>
+            <p class="section-note">保留原有角色四向行走与工具动作预览。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-up" width="231" height="394" style="width: 104px; height: 177px;"></canvas>
+                </div>
+                <h3>背面 Up</h3>
+                <div class="dims">231 x 394</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-down" width="266" height="431" style="width: 120px; height: 194px;"></canvas>
+                </div>
+                <h3>正面 Down</h3>
+                <div class="dims">266 x 431</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-left" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
+                </div>
+                <h3>左转 Left</h3>
+                <div class="dims">251 x 446</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-right" width="251" height="446" style="width: 113px; height: 200px;"></canvas>
+                </div>
+                <h3>右转 Right</h3>
+                <div class="dims">251 x 446</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>工具动作序列</h2>
+            <p class="section-note">耕地、浇水与播种 8 帧横向动作序列。</p>
+        </div>
+        <div class="container">
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-hoe" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
+                </div>
+                <h3>耕地 Hoeing</h3>
+                <div class="dims">320 x 460</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-water" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
+                </div>
+                <h3>浇水 Watering</h3>
+                <div class="dims">320 x 460</div>
+            </div>
+            <div class="card">
+                <div class="canvas-wrap">
+                    <canvas id="cvs-seed" width="320" height="460" style="width: 140px; height: 201px;"></canvas>
+                </div>
+                <h3>播种 Seeding</h3>
+                <div class="dims">320 x 460</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const FPS = 6;
+    const frameInterval = 1000 / FPS;
+
+    function attachSprite(canvasId, imgSrc, frames, fWidth, fHeight) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = imgSrc;
+
+        let currentFrame = 0;
+        let lastUpdate = performance.now();
+
+        img.onload = () => {
+            ctx.clearRect(0, 0, fWidth, fHeight);
+            ctx.drawImage(img, 0, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
+            function render(time) {
+                if (time - lastUpdate > frameInterval) {
+                    currentFrame = (currentFrame + 1) % frames;
+                    lastUpdate = time;
+                    ctx.clearRect(0, 0, fWidth, fHeight);
+                    ctx.drawImage(img, currentFrame * fWidth, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
                 }
                 requestAnimationFrame(render);
-            };
+            }
+            requestAnimationFrame(render);
+        };
+    }
+
+    attachSprite('cvs-up', '/asset/player_walk_up.png', 4, 231, 394);
+    attachSprite('cvs-down', '/asset/player_walk_down.png', 4, 266, 431);
+    attachSprite('cvs-left', '/asset/player_walk_left.png', 4, 251, 446);
+    attachSprite('cvs-right', '/asset/player_walk_right.png', 4, 251, 446);
+    attachSprite('cvs-hoe', '/player_hoe_sheet_unified.png?v=tool-v3', 8, 320, 460);
+    attachSprite('cvs-water', '/player_water_sheet_unified.png?v=tool-v3', 8, 320, 460);
+    attachSprite('cvs-seed', '/player_seed_sheet_unified.png?v=tool-v3', 8, 320, 460);
+    attachSprite('cvs-momo-active', '/concepts/current/momo-sheets/animated/momo-active-follow-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-sleepy', '/concepts/current/momo-sheets/animated/momo-sleepy-yawn-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-curled', '/concepts/current/momo-sheets/animated/momo-low-energy-curled-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-silent', '/concepts/current/momo-sheets/animated/momo-silent-breathing-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-hug', '/concepts/current/momo-sheets/animated/momo-hug-ready-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-momo-breath', '/concepts/current/momo-sheets/animated/momo-dandelion-breath-animated-sheet.png', 4, 160, 160);
+    attachSprite('cvs-grandma-rocking', '/concepts/current/grandma/grandma-rocking-chair-sheet.png', 4, 240, 320);
+    attachSprite('cvs-grandma-standing', '/concepts/current/grandma/grandma-standing-sheet.png', 4, 240, 320);
+
+    function attachCyclingSprite(canvasId, sequences, frames, fWidth, fHeight) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const label = document.getElementById('momo-motion-label');
+        let sequenceIndex = 0;
+        let currentFrame = 0;
+        let lastUpdate = performance.now();
+        let lastSwitch = performance.now();
+        const img = new Image();
+
+        function loadSequence() {
+            const [src, text] = sequences[sequenceIndex];
+            img.src = src;
+            label.textContent = text;
+            currentFrame = 0;
         }
 
-        // 初始化播放这 4 组完全不同尺寸切割出来的帧序列
-        attachSprite('cvs-up', '/asset/player_walk_up.png', 4, 231, 394);
-        attachSprite('cvs-down', '/asset/player_walk_down.png', 4, 266, 431);
-        attachSprite('cvs-left', '/asset/player_walk_left.png', 4, 251, 446);
-        attachSprite('cvs-right', '/asset/player_walk_right.png', 4, 251, 446);
-
-        // 初始化播放这套原始生存的工具与交互动画库
-        attachSprite('cvs-hoe', '/player_hoe_sheet_v3.png', 4, 148, 241);
-        attachSprite('cvs-water', '/player_water_sheet.png', 4, 138, 193);
-
-        const seedCvs = document.getElementById('cvs-seed');
-        const seedCtx = seedCvs.getContext('2d');
-        const seedImg = new Image();
-        seedImg.src = '/player_hd_seed.png';
-        seedImg.onload = () => {
-            // Draw properly centered bounding the image
-            const sw = seedImg.width;
-            const sh = seedImg.height;
-            const targetW = 150;
-            const targetH = 250;
-            // keep aspect ratio
-            const scale = Math.min(targetW / sw, targetH / sh);
-            const w = sw * scale;
-            const h = sh * scale;
-            const dx = (targetW - w) / 2;
-            const dy = targetH - h; // bottom align
-            
-            seedCtx.drawImage(seedImg, 0, 0, sw, sh, dx, dy, w, h);
+        img.onload = () => {
+            ctx.clearRect(0, 0, fWidth, fHeight);
+            ctx.drawImage(img, 0, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
         };
-    </script>
+
+        function render(time) {
+            if (time - lastSwitch > 2600) {
+                sequenceIndex = (sequenceIndex + 1) % sequences.length;
+                lastSwitch = time;
+                loadSequence();
+            }
+            if (time - lastUpdate > frameInterval && img.complete) {
+                currentFrame = (currentFrame + 1) % frames;
+                lastUpdate = time;
+                ctx.clearRect(0, 0, fWidth, fHeight);
+                ctx.drawImage(img, currentFrame * fWidth, 0, fWidth, fHeight, 0, 0, fWidth, fHeight);
+            }
+            requestAnimationFrame(render);
+        }
+
+        loadSequence();
+        requestAnimationFrame(render);
+    }
+
+    const momoMotionFrames = [
+        ['/concepts/current/momo-sheets/animated/momo-active-follow-animated-sheet.png', '墨墨逐帧循环：活跃跟随'],
+        ['/concepts/current/momo-sheets/animated/momo-sleepy-yawn-animated-sheet.png', '墨墨逐帧循环：困倦打哈欠'],
+        ['/concepts/current/momo-sheets/animated/momo-low-energy-curled-animated-sheet.png', '墨墨逐帧循环：低能量蜷缩'],
+        ['/concepts/current/momo-sheets/animated/momo-silent-breathing-animated-sheet.png', '墨墨逐帧循环：沉默呼吸'],
+        ['/concepts/current/momo-sheets/animated/momo-hug-ready-animated-sheet.png', '墨墨逐帧循环：抱抱陪伴'],
+        ['/concepts/current/momo-sheets/animated/momo-dandelion-breath-animated-sheet.png', '墨墨逐帧循环：蒲公英呼吸']
+    ];
+    attachCyclingSprite('momo-motion-canvas', momoMotionFrames, 4, 160, 160);
+</script>
 </body>
 </html>

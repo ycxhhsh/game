@@ -1,5 +1,113 @@
 # 🌻 心屿镇 (Heart Island Town) - 项目交接文档
 
+## 2026-05-20 资产交接补充
+
+### Viewer 资源状态
+- `viewer.html` 的“主角动画序列”已清理四向 walk sheet 边缘白边，原尺寸、4 帧布局和底部锚点保持不变。
+- `viewer.html` 的“工具动作序列”已切换到统一主角风格的完整动作 sheet：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 三张工具动作 sheet 已从 4 帧扩展为 8 帧横向序列，整体 `2560x460`，单帧 `320x460`；当前用于 `viewer.html` 与 `style-lab.html` 预览验证，尚未接入正式 `GameScene.js` 实机动作。
+- `viewer.html` 的“当前版本：墨墨与心情树”已更新为匹配当前主角工具动作质感的资源：
+  - 墨墨：`public/concepts/current/momo-concept.png`、`public/concepts/current/momo-actions.png`
+  - 心情树：`public/concepts/current/heart-tree-concept.png`、`public/concepts/current/heart-tree-stages.png`
+- 透明 cutout 位于 `public/concepts/current/cutouts/`，生成源图备份位于 `public/concepts/current/sources/`。`public/concepts/` 下上一版精美参考稿保持不动。
+- 墨墨新增 6 组动作 sheet，位于 `public/concepts/current/momo-sheets/`，每张 `640x160`、单帧 `160x160`、4 帧横向序列。
+- 林奶奶新增摇摇躺椅坐姿与站立姿动作 sheet，位于 `public/concepts/current/grandma/`，每张 `960x320`、单帧 `240x320`、4 帧横向序列。
+
+### 验收与后续
+- 验收入口：启动 `npm run dev` 后访问 `http://localhost:5888/viewer.html`，优先检查主角动画序列、工具动作序列、墨墨动作序列、林奶奶动作序列。
+- 透明 PNG 验收重点：角落 alpha 为 0，无白底、无明显 key 色边、无裁切，各动作播放时底部锚点稳定。
+- 下一步如需实机接入，需要单独更新 Phaser 加载与渲染逻辑，把 current cutout 或后续定稿资源接到游戏场景中；本轮不修改 `GameScene.js`。
+
+## 2026-05-21 Style Lab 画风试验窗口
+
+### 当前接入范围
+- 新增独立入口 `style-lab.html`，启动 `npm run dev` 后访问 `http://localhost:5888/style-lab.html` 可进入新画风试验窗口。
+- 本轮仅做画风融合试验，不修改正式 `src/scenes/GameScene.js`，也不迁移完整种田、背包、天气、对话和心情树 UI。
+- 试验场景位于 `src/style-lab/`，包含可移动主角、相机跟随、基础碰撞、墨墨跟随、林奶奶摇摇躺椅 idle 展示。
+- `vite.config.js` 已加入多页构建输入，`npm run build` 会同时输出 `dist/index.html` 与 `dist/style-lab.html`。
+- 角色沿用当前 viewer 优先资源：主角四向 walk sheet、墨墨 active follow sheet、林奶奶摇摇躺椅 sheet。
+
+### 世界资源包
+- 新画风地图资源位于 `public/assets/style-lab/`，统一为清晰描边、柔和像素阴影、温暖 chibi 游戏资产质感。
+- 地面 tile 位于 `public/assets/style-lab/tiles/`：草地 3 种、泥地 2 种、耕地 2 种、水面 2 帧、小路 2 种，均为 `64x64`。
+- 自然物件位于 `public/assets/style-lab/objects/`：阔叶树、松树、开花树、小果树、矮灌木树、小屋、心情树。
+- 花草位于 `public/assets/style-lab/foliage/`：草丛、野花、蒲公英、小蘑菇、蕨叶、石边草、粉花、黄花。
+- 装饰物位于 `public/assets/style-lab/props/`：小石头、木栅栏段、木牌、田边小桶；软阴影素材为 `public/assets/style-lab/soft_shadow.png`。
+
+### 验收方式
+- 页面验收：打开 `http://localhost:5888/style-lab.html`，检查玩家可移动、相机跟随、地图可观察、基础碰撞有效、墨墨跟随主角、林奶奶摇摇躺椅循环正常。
+- 视觉验收：确认农田区、林奶奶小屋区、心情树区、水岸与小路区都有明确分区；树、花草、石头等自然物件可见多种变体，避免全地图重复同一种资源。
+- 资源验收：透明物件 PNG 四角 alpha 为 0，地面 tile 可平铺，无白底和明显 key 色边。
+
+## 2026-05-22 Style Lab 二轮接入与墨墨逐帧动画
+
+### Style Lab 结构调整
+- `src/style-lab/StyleLabScene.js` 保持为独立试验场景，正式 `src/scenes/GameScene.js` 仍未修改。
+- 新增 `src/style-lab/styleLabAssets.js` 管理 Style Lab 的 tile、世界物件、主角、墨墨和林奶奶 sheet 清单。
+- 新增 `src/style-lab/styleLabLayout.js` 管理地图尺寸、农田、小路、水域、地标、树木、花草和装饰物摆放数据。
+- 这次拆分后，后续迁回正式游戏时可以优先复用资源 manifest、布局数据、变体池和底部锚点排序策略。
+
+### 墨墨逐帧动画
+- 新增墨墨 animated sheet，位于 `public/concepts/current/momo-sheets/animated/`：
+  - `momo-active-follow-animated-sheet.png`
+  - `momo-sleepy-yawn-animated-sheet.png`
+  - `momo-low-energy-curled-animated-sheet.png`
+  - `momo-silent-breathing-animated-sheet.png`
+  - `momo-hug-ready-animated-sheet.png`
+  - `momo-dandelion-breath-animated-sheet.png`
+- 每张仍为 `640x160`、单帧 `160x160`、4 帧横向序列，底部锚点保持一致；在原动作基础上增强了跳步、呼吸、蜷缩、抱抱和蒲公英粒子的帧内变化。
+- `viewer.html` 的墨墨动作序列已切换到 animated sheet，并把“透明候选素材”区的墨墨预览改为逐帧 canvas 轮播。
+- `style-lab.html` 会根据场景状态切换墨墨动画：移动时活跃跟随，靠近林奶奶时抱抱，靠近心情树时蒲公英呼吸，原地停留后进入沉默呼吸、困倦打哈欠或低能量蜷缩。
+
+### Style Lab 二轮接入
+- `style-lab.html` 已接入主角工具动作 sheet：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 工具动作已重绘为 8 帧横向序列，整体 `2560x460`、单帧 `320x460`，比上一版 4 帧动作更连贯；Style Lab 与 viewer 均已按 8 帧播放。
+- 试验场景中新增轻量种田验证逻辑：按 `1/2/3` 切换锄头、水壶、种子，面向农田按 `E` 或 `Space` 可依次完成普通地块、耕地、湿润耕地、播种小芽的状态变化。工具动作播放时会暂停移动，并用统一底部锚点的动作 sprite 覆盖主角当前位置。
+- 林奶奶摇摇躺椅展示比例已从大画面展示缩小为接近主角体量，阴影、互动半径和碰撞范围同步收窄。
+- 墨墨跟随改为贴地小步跳：停下时稳定落地，移动时仅有 1-2px 的脚步起伏，并使用固定在脚底附近的软阴影强化落地感。
+- 石头、栅栏、小桶、小屋、心情树、林奶奶摇椅等硬物已加入碰撞；小花小草默认不碰撞，避免走路过卡。
+- 自然物摆放规则已收紧：树木禁止出现在水域、农田、小路、房屋入口和水岸缓冲区；石头偏向路边、田边和树根附近；花草以小簇分布，保留至少 5 种树与 8 种花草变体。
+- 新增 Style Lab 专用小屋内部场景 `src/style-lab/StyleLabInteriorScene.js`。室内已改为与外部地图一致的 64px 网格视角：地板/墙体 tile 位于 `public/assets/style-lab/interior/tiles/`，床、桌子、炉灶、书架、摇摇椅、门垫等家具已拆成独立透明对象，位于 `public/assets/style-lab/interior/objects/`，避免整张背景图与外部地图视角脱节。靠近室外小屋门按 `Enter` 进屋，室内可走并有基础碰撞；底部中央门槛/门垫为可退出区域，按 `Enter` 或 `E` 返回室外。
+- 本轮仍只修改 Style Lab 试验窗口和资源交接说明，正式 `src/scenes/GameScene.js`、正式 `src/scenes/RoomScene.js`、背包数量、体力消耗、作物成长天数和剧情对话均未接入。
+
+### 验收方式
+- 打开 `http://localhost:5888/viewer.html`，检查“墨墨动作序列”和顶部墨墨预览是否是真正逐帧播放，不再只是切换静态 cutout。
+- 打开 `http://localhost:5888/style-lab.html`，移动主角、停留、靠近林奶奶和心情树，观察墨墨状态切换；检查林奶奶比例、树/石头/硬物碰撞、自然物分布和水岸避让。
+- 在 Style Lab 中按 `1/2/3` 切工具，面向农田按 `E` 或 `Space`，检查耕地、浇水、播种动作和地块状态变化；靠近小屋门按 `Enter` 进入室内，室内按 `Enter` 或 `E` 返回。
+- 可直接访问 `http://localhost:5888/style-lab.html?interior=1` 单独验收室内场景视角、家具碰撞与出门门槛。
+- 资源检查：墨墨 animated sheet 尺寸为 `640x160`，主角工具 sheet 尺寸为 `2560x460`，室内家具为独立透明 PNG；四角 alpha 为 0，播放时无白底、无明显缩放漂移。
+
+## 2026-05-24 开发计划调整与交互链路思考
+
+### 主角工具帧动画暂存
+- 当前 8 帧主角工具动作 sheet 已作为本轮基准版本冻结：
+  - `public/player_hoe_sheet_unified.png`
+  - `public/player_water_sheet_unified.png`
+  - `public/player_seed_sheet_unified.png`
+- 这三组资源已在 `viewer.html` 与 `style-lab.html` 中完成可视化验收入口接入，适合作为画风、底部锚点和操作手感验证用的当前稳定版。
+- 后续暂不把工具帧精修列为最高优先级，也暂不优先迁入正式 `src/scenes/GameScene.js`。进入正式生产前，再集中用 Aseprite 或 TexturePacker 做人工锚点、轮廓、手部和帧间一致性精修。
+
+### 交互对话框链路
+- 正式入口已存在 Vue/Pinia 对话链路：`src/ui/DialogueUI.vue` 负责逐字显示，`src/store/uiStore.js` 的 `showDialogue()` 管理打开状态，`src/ui/App.vue` 监听 `SHOW_DIALOGUE` 事件。
+- 正式 `src/scenes/GameScene.js` 的林奶奶交互已能在靠近后按 `E` / `Space` 触发对话，并根据是否持有作物进入不同感谢文本；对话文字当前以 50ms 间隔逐字显示。
+- 下一步需要把同一条交互体验同步到 Style Lab：在 `src/style-lab/StyleLabScene.js` 中为林奶奶增加靠近检测与 `E` / `Space` 触发的轻量对话验证。Style Lab 目前仍只展示林奶奶动作和距离触发的墨墨状态，不应在文档中误写成已完成 Lab 对话。
+
+### 日记与天气情绪流方案
+- 日记与天气情绪流已有原型，当前进入产品化整理阶段：`src/ui/DiaryUI.vue` 已支持情绪图景选择、强度滑杆、短句记录和“明天天气”预览。
+- `src/store/gameStore.js` 的 `recordMoodEntry()` 已把日记输入写入 `moodEntries`，并影响 `tomorrowWeather`、心情树状态、墨墨状态与社交电量；`advanceEmotionDay()` 会在跨天时应用明日天气并推进心情树衰减/恢复。
+- 后续方案重点应从“做一个日记入口”调整为“整理每日闭环”：当天写一句或选择情绪，次日天气/心情树/墨墨状态给出柔性反馈，再通过自我照护、林奶奶对话或邮箱回信形成不惩罚玩家的疗愈循环。
+
+### 更新后的优先级判断
+- P1 先聚焦：交互对话框体验打磨、Style Lab 对话同步、日记/天气/心情树反馈闭环梳理。
+- 主角工具帧保留为当前基准版本；除非正式迁回 `GameScene.js` 或出现明显锚点问题，否则先不继续扩张动作帧资产工作量。
+- 室内场景正式化、邮箱反馈和更复杂的情绪作物/赠礼分支仍放在后续节奏中推进。
+
 ## 🎮 游戏简介
 《心屿镇》是一款以治愈、解压为核心理念的【Web 像素风农场模拟管理游戏】。
 我们完全摒弃了传统的“疲劳值”、“主线枯燥任务”与“时间淘汰机制”，鼓励玩家伴随着每天随机的治愈天气，在海岛上自在发呆、种田以及随心所欲地去与留守的林奶奶建立无压力的情感羁绊。
@@ -37,7 +145,14 @@ npm run dev
 - 您就可以直接在浏览器中访问画廊工具页：[http://localhost:5888/viewer.html](http://localhost:5888/viewer.html)
 - 画廊页支持任意分辨率流式播放，由于调用的是纯物理底稿素材，不会占用任何游戏内存。您可以查阅本迭代的所有废弃兼过渡高清资源。
 
-### 3. 生成公网站点 (Build for Production)
+### 3. 新画风试验窗口 (Style Lab)
+为了验证当前主角、墨墨、林奶奶与新地图画风的融合效果，根目录新增了独立试验入口：
+
+- 启动 `npm run dev` 后访问：[http://localhost:5888/style-lab.html](http://localhost:5888/style-lab.html)
+- 该窗口使用 `src/style-lab/` 下的独立 Phaser 场景，不会影响正式游戏入口和 `viewer.html`。
+- 目前用于观察新地图资源、角色比例、底部锚点排序、墨墨跟随和林奶奶摇摇躺椅展示，后续确认方向后再迁回正式 `GameScene.js`。
+
+### 4. 生成公网站点 (Build for Production)
 如果希望将游戏分享到如 **GitHub Pages** 或独立游戏平台 **itch.io** 供全球玩家网页串流游玩：
 1. 运行 `npm run build` 进行极速压缩打包。
 2. 命令走完后，同级目录会新生成一个 `dist` 文件夹，包含 `index.html` 以及压缩过的 `assets`。这就是全静态、免后端的直接网页游戏打包主体。您可以将它上传至这世上的任何公网服务器！
@@ -60,30 +175,30 @@ npm run dev
 
 ### 4. 林奶奶的陪伴机制初版 (Grandma Lin)
 - 重写并设计了高分辨率的红色砖木房子、奶奶独立肖像与动态木制摇椅。
-- 奶奶的交互碰撞箱已建立，但等待接入真实的“逐字打印式”羁绊对话。
+- 奶奶的交互碰撞箱已建立，正式入口已能通过 `SHOW_DIALOGUE` 事件触发逐字打印式羁绊对话；Style Lab 仍待补同等交互验证。
 
 ---
 
 ## 🐞 遗留问题与当前难点 (Known Issues / Bugs)
 
-### 🚨 动作帧生成中心点“跳跃”漂移问题 
-**症状**: 当玩家执行“挥舞锄头”时，角色的身体突然变大并发生了瞬间的上下腾空瞬移。
-**原因分析**: 在最后一次的需求中，为了追求极致还原的 2D 逐帧动画（Frame-by-frame），我们让 AI 根据同一主角面貌单独生成了 4 张高清分解动作（高举-挥下-砸地-回拉）。但**由于 AI 无法精确锁死输出图像中的中心锚点与留白边界**，导致这4张图片即使都被裁剪透明化后，其主角所占“画幅的实际比例”与“绝对中心 X/Y”并不在同一个锚点（Pivot）。
-**解决建议**: 需要打开类似 `Aseprite` 或 `TexturePacker` 等帧动画装配软件，通过透明网格肉眼对齐这 4 帧的中心点，输出为一张标准等距的 `SpriteSheet` 长条图，然后再通过 `this.load.spritesheet` 重新挂载使用，即可彻底解决闪烁与漂移！
+### ⚠️ 工具动作帧仍需人工精修
+**当前状态**: 耕地、浇水、播种已重绘为 8 帧横向 sheet，动作连贯性比 4 帧版本明显提升，并已接入 `viewer.html` 与 `style-lab.html`。
+**剩余风险**: AI 生成的逐帧角色仍可能出现轻微脸型、手部、工具位置和粒子边界变化。当前版本适合用于画风与手感验证，进入正式游戏前仍建议用 Aseprite 或 TexturePacker 做一次人工锚点、轮廓和帧间一致性精修。
+**建议方向**: 后续可以在现有 8 帧基础上继续补齐四方向动作，或保留当前主方向动作并用翻转、粒子和轻微位移反馈覆盖早期玩法验证。
 
 ---
 
 ## 🚀 下一步开发计划 (Next Steps & Roadmap)
 
 ### P1 优先级 (Immediate Focus)
-1. **重构主角工具帧动画流 (Fix Player Action Frames)**: 
-   - 解决目前散乱加载的多张动作生发图位移问题。若无法对其进行软件人工锚点修正，请退回上一个稳定版本：即使用统一带水壶的高清主角原图（`player_hd`），通过挂载纯渲染物理层级别的 `Tween` 抖动与特效（粒子飞溅），来“拟态”出各个农具的反馈手感。
-2. **林奶奶交互对话框 (Grandma's Typewriter Dialog)**:
-   - 全面上线“基于 UI Group 体系拼接底框”，并用 `Phaser.Time.Event` 跑一个定时器，实现每个字符之间 50ms 间隔的逐字淡入显示输出功能。
-3. **情绪系统羁绊交互 (Emotion Cropping & Gifting)**:
-   - 若玩家走到林奶奶面前并按下 `SPACE` / `E` 时，检测背包：如果此时背包中正持有番茄等【情绪满载作物】，触发林奶奶特定的“惊喜/感谢”分支剧情对话，并隐藏后台增加隐性情感值。
+1. **交互对话框体验打磨与 Style Lab 同步 (Dialog Production Pass)**:
+   - 正式入口已有 `DialogueUI.vue`、`uiStore.showDialogue()` 与 `SHOW_DIALOGUE` 事件链路，林奶奶交互能触发逐字对话；下一步重点是修正/打磨点击、空格、回车的推进体验，并把靠近林奶奶按 `E` / `Space` 弹出对话的轻量验证同步到 `src/style-lab/StyleLabScene.js`。
+2. **日记与天气情绪流产品化 (Diary & Weather Emotion Loop)**:
+   - 基于现有 `DiaryUI.vue` 与 `gameStore.recordMoodEntry()`，梳理“今日记录 -> 明日天气 -> 心情树/墨墨反馈 -> 自我照护恢复”的每日闭环，让情绪输入产生温柔反馈，而不是惩罚或任务压力。
+3. **主角工具帧动画基准冻结 (Player Tool Frames Baseline)**:
+   - 当前 8 帧工具 sheet 暂存为可验收基准版本，继续用于 `viewer.html` 与 `style-lab.html` 的手感验证；正式迁回 `GameScene.js` 前再做人工锚点、轮廓和帧间一致性精修。
 
 ### P2 优先级 (Long-term Mechanics)
-1. **日记与天气情绪流**: 核心大饼（未动工）。加入玩家每日主动手写一句话日历的UI功能，依据日历用语好坏，演化第二天的天空滤镜（如下“治愈太阳雨”）。
-2. **邮箱反馈闭环**: 增设木屋旁的邮箱机制，次日必会收到老奶奶的手写信或稀有小树苗。
-3. **室内场景设计 (Interior Scaling)**: 将木屋加上 `E` 键入门判定，并切场景（`SceneManager.switch`）到一座温馨点着暖炉的复古室内 `RoomScene`。
+1. **情绪系统羁绊交互 (Emotion Cropping & Gifting)**: 在林奶奶对话链路稳定后，再扩展作物赠礼分支、情绪作物识别和隐性情感值反馈。
+2. **邮箱反馈闭环**: 增设木屋旁的邮箱机制，让次日反馈承接玩家前一天的日记、天气或林奶奶互动，可收到手写信、小树苗或低压力提示。
+3. **室内场景正式化 (Interior Production Pass)**: Style Lab 已有可进出的小屋内部试验场景；下一步是把独立家具、碰撞、门槛退出逻辑和温馨陈设迁回正式 `RoomScene`，并补上剧情、对话和可交互物件。

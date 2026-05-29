@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { TILE_SIZE, PALETTE, SPRITES_DATA } from '../utils/constants';
 import { useGameStore } from '../store/gameStore';
 import { useUiStore } from '../store/uiStore';
-import { EventBus } from '../events/EventBus';
+import { EventBus, EMOTION_EVENTS } from '../events/EventBus';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -22,18 +22,23 @@ export default class GameScene extends Phaser.Scene {
         this.gameTime = 6 * 60;
         this.gameStore = useGameStore();
         this.uiStore = useUiStore();
+        this.currentWeather = this.gameStore.weather;
+        this.emotionDrainTimer = 0;
         
         // 5. 交互高光框输入控制
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys('W,A,S,D,T,E');
         this.input.keyboard.on('keydown', (e) => {
-            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen) return;
+            if (this.uiStore.isDialogOpen || this.uiStore.isInventoryOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen || this.uiStore.isMailboxOpen) return;
             if (e.key === ' ' || e.key === 'e' || e.key === 'E') this.handleInteract();
             if (e.key === 't' || e.key === 'T') this.passDay();
         });
 
         // 4. 环境光 (UI has been delegated to Vue via App.vue)
         this.createEnvironmentLight();
+        this.createHeartTree();
+        this.createMomoCompanion();
+        this.bindEmotionEvents();
 
         // 5. 交互高光框
         this.highlightBox = this.add.graphics();
@@ -72,6 +77,8 @@ export default class GameScene extends Phaser.Scene {
             this.keys.A.reset();
             this.keys.D.reset();
             this.cameras.main.fadeIn(400, 0, 0, 0);
+            this.refreshHeartTreeVisual();
+            this.updateMomoVisual();
         });
     }
 
@@ -122,6 +129,7 @@ export default class GameScene extends Phaser.Scene {
         // 门垫修正坐标到门前
         const doorMat = this.add.ellipse(hx + 96, hy + 196, 40, 20, 0xffa500).setDepth(hy + 192).setAlpha(0.5);
         this.tweens.add({ targets: doorMat, alpha: 0.1, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.createMailbox(hx + 44, hy + 224);
         
         // 调整奶奶位置偏离屋顶，移到屋外旁边
         const gx = hx + 230; const gy = hy + 160;
@@ -293,7 +301,12 @@ export default class GameScene extends Phaser.Scene {
         farm.sprites = [];
 
         if (farm.state === 'tilled' || farm.state === 'watered') {
-            farm.sprites.push(this.add.image(px, py, farm.state).setOrigin(0, 0).setDepth(1));
+            const variant = (x + y) % 2 === 0 ? 'a' : 'b';
+            const tileKey = farm.state === 'watered' ? `farm_tilled_wet_${variant}` : `farm_tilled_${variant}`;
+            farm.sprites.push(this.add.image(px, py, tileKey)
+                .setOrigin(0, 0)
+                .setDepth(1)
+                .setDisplaySize(TILE_SIZE, TILE_SIZE));
         }
         
         if (farm.crop === 1 || farm.crop === 11) {
@@ -339,6 +352,188 @@ export default class GameScene extends Phaser.Scene {
             tint: 0xffffff
         });
         this.weatherEmitter.setDepth(1999);
+
+        this.socialBatteryOverlay = this.add.rectangle(0, 0, this.MAP_COLS * TILE_SIZE, this.MAP_ROWS * TILE_SIZE, 0x777780)
+            .setOrigin(0, 0)
+            .setDepth(2001)
+            .setAlpha(0);
+    }
+
+    createMailbox(x, y) {
+        this.mailboxZone = new Phaser.Geom.Rectangle(x - 38, y - 44, 76, 92);
+        this.mailboxPost = this.add.rectangle(x, y + 30, 8, 52, 0x7c5b41).setDepth(y + 29);
+        this.mailboxBody = this.add.rectangle(x, y, 48, 30, 0xd79b63)
+            .setStrokeStyle(3, 0x6b4b3a)
+            .setDepth(y + 30);
+        this.mailboxDoor = this.add.rectangle(x + 16, y, 12, 22, 0xf0c289)
+            .setStrokeStyle(2, 0x6b4b3a)
+            .setDepth(y + 31);
+        this.mailboxFlag = this.add.rectangle(x - 31, y - 12, 7, 28, 0xd35d6e)
+            .setOrigin(0.5, 1)
+            .setDepth(y + 32);
+        this.mailboxGlow = this.add.ellipse(x, y + 44, 66, 18, 0xffdfa3, 0.18)
+            .setDepth(y + 18)
+            .setAlpha(0);
+        this.tweens.add({
+            targets: this.mailboxGlow,
+            alpha: 0.42,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        this.refreshMailboxVisual();
+    }
+
+    refreshMailboxVisual() {
+        if (!this.mailboxFlag || !this.mailboxGlow) return;
+        const hasUnread = this.gameStore?.hasUnreadMail;
+        this.mailboxFlag
+            .setAngle(hasUnread ? -22 : 0)
+            .setFillStyle(hasUnread ? 0xd35d6e : 0x9a7562);
+        this.mailboxGlow.setVisible(Boolean(hasUnread));
+    }
+
+    createHeartTree() {
+        const x = 18 * TILE_SIZE;
+        const y = 12 * TILE_SIZE;
+        this.heartTreeGlow = this.add.ellipse(x, y + 58, 112, 34, 0xf5b6c6, 0.22).setDepth(y + 64);
+        this.heartTreeSprite = this.add.image(x, y, 'spr_tree_cherry').setOrigin(0.5, 0.85).setDepth(y + 70).setScale(3.3);
+        this.heartTreeSprite.setInteractive({ useHandCursor: true });
+        this.heartTreeSprite.on('pointerdown', () => EventBus.emit(EMOTION_EVENTS.OPEN_HEART_TREE));
+        this.heartTreeWeeds = [];
+        this.refreshHeartTreeVisual();
+    }
+
+    refreshHeartTreeVisual() {
+        if (!this.heartTreeSprite) return;
+        const stage = this.gameStore.heartTree.stage;
+        const tintMap = {
+            wilted: 0x888c75,
+            recovering: 0xb0c77d,
+            healthy: 0x88c978,
+            blooming: 0xffb0c5
+        };
+        this.heartTreeSprite.setTint(tintMap[stage] || 0xb0c77d);
+        this.heartTreeGlow.setFillStyle(stage === 'blooming' ? 0xf5b6c6 : 0xb6d58a, stage === 'wilted' ? 0.08 : 0.22);
+
+        this.heartTreeWeeds.forEach((weed) => weed.destroy());
+        this.heartTreeWeeds = [];
+        const weedCount = Math.min(this.gameStore.heartTree.weeds, 6);
+        for (let i = 0; i < weedCount; i++) {
+            const weed = this.add.image(
+                this.heartTreeSprite.x - 46 + i * 18,
+                this.heartTreeSprite.y + 42 + (i % 2) * 5,
+                'grass_tuft'
+            ).setDepth(this.heartTreeSprite.depth + 1).setScale(1.4).setTint(0x7f8365);
+            this.heartTreeWeeds.push(weed);
+        }
+    }
+
+    createMomoCompanion() {
+        const key = `spr_momo_${this.gameStore.momo.mood}`;
+        this.momoSprite = this.add.sprite(this.player.x - 42, this.player.y + 28, key).setDepth(this.player.y + 12).setScale(2.2);
+        this.momoAnchor = new Phaser.Math.Vector2(this.momoSprite.x, this.momoSprite.y);
+        this.momoAnimTime = 0;
+        this.momoSide = -1;
+        this.momoBaseScale = 2.2;
+        this.momoShadow = this.add.ellipse(this.momoSprite.x, this.momoSprite.y + 12, 36, 10, 0x1b1b1b, 0.18)
+            .setDepth(this.momoSprite.depth - 1);
+        this.momoBreathRing = this.add.ellipse(this.momoSprite.x, this.momoSprite.y, 38, 28)
+            .setStrokeStyle(2, 0xa8e6cf, 0.4)
+            .setDepth(this.momoSprite.depth + 1)
+            .setVisible(false);
+        this.updateMomoVisual();
+    }
+
+    updateMomoVisual() {
+        if (!this.momoSprite) return;
+        const key = `spr_momo_${this.gameStore.momo.mood}`;
+        if (this.textures.exists(key)) this.momoSprite.setTexture(key);
+        if (this.gameStore.momo.pose === 'silent') {
+            this.momoBaseScale = 1.9;
+            this.momoSprite.setAlpha(0.82);
+        } else if (this.gameStore.momo.pose === 'sleepy') {
+            this.momoBaseScale = 2.05;
+            this.momoSprite.setAlpha(0.92);
+        } else {
+            this.momoBaseScale = 2.25;
+            this.momoSprite.setAlpha(1);
+        }
+        this.momoSprite.setScale(this.momoBaseScale);
+    }
+
+    updateMomoFollower(delta, isPlayerMoving) {
+        if (!this.momoSprite || !this.player) return;
+        this.momoAnimTime += delta;
+
+        if (this.player.currentDir === 'right') this.momoSide = -1;
+        else if (this.player.currentDir === 'left') this.momoSide = 1;
+
+        const offsetX = this.momoSide * 42;
+        const offsetY = this.player.currentDir === 'up' ? 44 : 28;
+        const targetX = this.player.x + offsetX;
+        const targetY = this.player.y + offsetY;
+        const distance = Phaser.Math.Distance.Between(this.momoAnchor.x, this.momoAnchor.y, targetX, targetY);
+        const followLerp = distance > 180 ? 0.18 : (isPlayerMoving ? 0.105 : 0.065);
+
+        if (distance > 320) {
+            this.momoAnchor.set(targetX, targetY);
+        } else {
+            this.momoAnchor.x += (targetX - this.momoAnchor.x) * followLerp;
+            this.momoAnchor.y += (targetY - this.momoAnchor.y) * followLerp;
+        }
+
+        const t = this.momoAnimTime;
+        const pose = this.gameStore.momo.pose;
+        const hop = isPlayerMoving && pose === 'active' ? Math.abs(Math.sin(t * 0.012)) * 8 : 0;
+        const breath = pose === 'silent' ? Math.sin(t * 0.004) : Math.sin(t * 0.006);
+        const idleBob = pose === 'curled' ? 0 : breath * (pose === 'silent' ? 1.5 : 2.5);
+        const scalePulse = pose === 'silent' ? 1 + breath * 0.025 : 1 + Math.max(0, breath) * 0.012;
+        const walkTilt = isPlayerMoving && pose === 'active' ? Math.sin(t * 0.012) * 4 : breath * 1.2;
+
+        this.momoSprite.x = this.momoAnchor.x;
+        this.momoSprite.y = this.momoAnchor.y + idleBob - hop;
+        this.momoSprite.setScale(this.momoBaseScale * scalePulse);
+        this.momoSprite.setAngle(walkTilt);
+        this.momoSprite.setFlipX(this.momoSprite.x > this.player.x);
+        this.momoSprite.setDepth(this.momoSprite.y + 12);
+
+        if (this.momoShadow) {
+            this.momoShadow.x = this.momoAnchor.x;
+            this.momoShadow.y = this.momoAnchor.y + 16;
+            this.momoShadow.setScale(1 + Math.min(distance / 260, 0.45), 1);
+            this.momoShadow.setDepth(this.momoSprite.depth - 1);
+            this.momoShadow.setAlpha(pose === 'silent' ? 0.1 : 0.18);
+        }
+
+        if (this.momoBreathRing) {
+            const showRing = pose === 'silent';
+            this.momoBreathRing.setVisible(showRing);
+            if (showRing) {
+                const ringScale = 1.05 + Math.max(0, breath) * 0.35;
+                this.momoBreathRing.x = this.momoSprite.x;
+                this.momoBreathRing.y = this.momoSprite.y + 2;
+                this.momoBreathRing.setScale(ringScale);
+                this.momoBreathRing.setAlpha(0.18 + Math.max(0, breath) * 0.28);
+                this.momoBreathRing.setDepth(this.momoSprite.depth + 1);
+            }
+        }
+    }
+
+    bindEmotionEvents() {
+        this.onEmotionChanged = () => {
+            if (this.heartTreeSprite) this.refreshHeartTreeVisual();
+            if (this.momoSprite) this.updateMomoVisual();
+        };
+        EventBus.on(EMOTION_EVENTS.SELF_CARE_DONE, this.onEmotionChanged);
+        EventBus.on(EMOTION_EVENTS.MOOD_ENTRY_RECORDED, this.onEmotionChanged);
+        EventBus.on(EMOTION_EVENTS.MOMO_STATE_CHANGED, this.onEmotionChanged);
+        this.events.once('shutdown', () => {
+            EventBus.off(EMOTION_EVENTS.SELF_CARE_DONE, this.onEmotionChanged);
+            EventBus.off(EMOTION_EVENTS.MOOD_ENTRY_RECORDED, this.onEmotionChanged);
+            EventBus.off(EMOTION_EVENTS.MOMO_STATE_CHANGED, this.onEmotionChanged);
+        });
     }
 
     showEmote(target, emoteKey) {
@@ -403,7 +598,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleInteract() {
-        if (this.uiStore.isDialogOpen) { this.advanceDialogue(); return; }
+        if (this.uiStore.isDialogOpen) { EventBus.emit('ADVANCE_DIALOGUE'); return; }
         if (this.isActing) return;
 
         let tx = Math.floor(this.player.x / TILE_SIZE);
@@ -413,6 +608,20 @@ export default class GameScene extends Phaser.Scene {
         else if (this.player.currentDir === 'down') { ty += 1; }
         else if (this.player.currentDir === 'left') { tx -= 1; }
         else if (this.player.currentDir === 'right') { tx += 1; }
+
+        if (this.heartTreeSprite) {
+            const treeDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.heartTreeSprite.x, this.heartTreeSprite.y + 42);
+            if (treeDist <= 100) {
+                EventBus.emit(EMOTION_EVENTS.OPEN_HEART_TREE);
+                return;
+            }
+        }
+
+        if (this.mailboxZone && Phaser.Geom.Rectangle.Contains(this.mailboxZone, this.player.x, this.player.y)) {
+            EventBus.emit(EMOTION_EVENTS.OPEN_MAILBOX);
+            this.refreshMailboxVisual();
+            return;
+        }
 
         // 门锁交互检测 (进门事件)
         let doorDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.grandmaHouse.x + 130, this.grandmaHouse.y + 330);
@@ -456,6 +665,7 @@ export default class GameScene extends Phaser.Scene {
                 this.farmStates[key] = farm;
                 this.refreshFarmTile(tx, ty);
                 this.emitParticles(tx * TILE_SIZE + 16, ty * TILE_SIZE + 16, pColor, 8);
+                this.gameStore.adjustSocialBattery(-1, 'harvest');
                 return; // 直接收走，不播普通动作
             }
 
@@ -548,6 +758,7 @@ export default class GameScene extends Phaser.Scene {
         this.player.setTexture(`player_${animDir}`);
 
         if (willChange && farm) {
+            this.gameStore.adjustSocialBattery(-2, 'farmWork');
             if (this.uiStore.currentTool === 1) farm.state = 'tilled';
             else if (this.uiStore.currentTool === 2) farm.state = 'watered';
             else if (this.uiStore.currentTool === 3) {
@@ -567,7 +778,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.isActing || this.isInventoryOpen || this.uiStore.isDialogOpen || this.isDiaryOpen) return;
+        this.refreshMailboxVisual();
+        if (this.isActing || this.uiStore.isInventoryOpen || this.uiStore.isDialogOpen || this.uiStore.isDiaryOpen || this.uiStore.isHeartTreeOpen || this.uiStore.isMailboxOpen) return;
 
         // --- 控制与移动 ---
         this.player.setVelocity(0);
@@ -579,13 +791,14 @@ export default class GameScene extends Phaser.Scene {
 
         if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx*dx + dy*dy); dx /= len; dy /= len; }
 
-        this.player.setVelocityX(dx * this.playerSpeed);
-        this.player.setVelocityY(dy * this.playerSpeed);
+        const effectiveSpeed = this.gameStore.socialBattery < 30 ? 112 : this.playerSpeed;
+        this.player.setVelocityX(dx * effectiveSpeed);
+        this.player.setVelocityY(dy * effectiveSpeed);
 
         if(!this.player.currentDir) this.player.currentDir = 'down';
 
         if (dx !== 0 || dy !== 0) {
-            this.player.setVelocity(dx * this.playerSpeed, dy * this.playerSpeed);
+            this.player.setVelocity(dx * effectiveSpeed, dy * effectiveSpeed);
             if (dx > 0) { this.player.currentDir = 'right'; }
             else if (dx < 0) { this.player.currentDir = 'left'; }
             else if (dy > 0) { this.player.currentDir = 'down'; }
@@ -603,6 +816,13 @@ export default class GameScene extends Phaser.Scene {
 
         // 动态深度计算
         this.player.setDepth(this.player.y + 16);
+        this.updateMomoFollower(delta, dx !== 0 || dy !== 0);
+
+        this.emotionDrainTimer += delta;
+        if ((dx !== 0 || dy !== 0) && this.emotionDrainTimer > 5000) {
+            this.gameStore.adjustSocialBattery(-1, 'walking');
+            this.emotionDrainTimer = 0;
+        }
 
 
 
@@ -627,7 +847,11 @@ export default class GameScene extends Phaser.Scene {
             this.gameTimer -= 1000;
             if (this.gameTime >= 24 * 60) { // 过夜生长逻辑
                 this.gameTime -= 24 * 60; 
-                this.currentWeather = this.tomorrowWeather; // 天气演化羁绊
+                this.gameStore.advanceEmotionDay();
+                this.currentWeather = this.gameStore.weather;
+                this.refreshHeartTreeVisual();
+                this.refreshMailboxVisual();
+                this.updateMomoVisual();
                 for (let key in this.farmStates) {
                     let farm = this.farmStates[key];
                     if (farm.state === 'watered') {
@@ -671,6 +895,11 @@ export default class GameScene extends Phaser.Scene {
             if (this.nightOverlay.alpha !== overlayAlpha) this.nightOverlay.setAlpha(overlayAlpha);
         } else {
             if (this.nightOverlay.alpha !== 0) this.nightOverlay.setAlpha(0);
+        }
+
+        if (this.socialBatteryOverlay) {
+            const batteryAlpha = this.gameStore.socialBattery < 15 ? 0.2 : (this.gameStore.socialBattery < 30 ? 0.12 : 0);
+            if (this.socialBatteryOverlay.alpha !== batteryAlpha) this.socialBatteryOverlay.setAlpha(batteryAlpha);
         }
         
         if (hour >= 5 && hour < 18) {
