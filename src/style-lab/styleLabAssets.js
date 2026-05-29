@@ -39,6 +39,20 @@ export const WORLD_OBJECT_KEYS = [
     ['soft_shadow', 'assets/style-lab/soft_shadow.png']
 ];
 
+export const STONE_GRANDMA_IMAGE_KEYS = [
+    ['sg_grandma_petrified', 'assets/style-lab/stone-grandma/grandma-petrified.png?v=sg-doc-v2'],
+    ['sg_grandma_cracked', 'assets/style-lab/stone-grandma/grandma-cracked.png?v=sg-doc-v2'],
+    ['sg_grandma_human', 'assets/style-lab/stone-grandma/grandma-human.png?v=sg-doc-v2'],
+    ['sg_mind_mirror', 'assets/style-lab/stone-grandma/mind-mirror.png'],
+    ['sg_tolerance_grass', 'assets/style-lab/stone-grandma/tolerance-grass.png'],
+    ['sg_memory_pain', 'assets/style-lab/stone-grandma/memory-ball-pain.png'],
+    ['sg_memory_warmth', 'assets/style-lab/stone-grandma/memory-ball-warmth.png'],
+    ['sg_light_orb', 'assets/style-lab/stone-grandma/light-orb.png'],
+    ['sg_companion_vine_seed', 'assets/style-lab/stone-grandma/companion-vine-seed.png'],
+    ['sg_record_card', 'assets/style-lab/stone-grandma/record-card.png'],
+    ['sg_ordinary_crop', 'assets/style-lab/stone-grandma/ordinary-crop.png']
+];
+
 export const TOOL_SHEETS = [
     { key: 'lab_tool_hoe', anim: 'lab_tool_hoe', path: 'player_hoe_sheet_unified.png?v=style-lab-v3', frameWidth: 320, frameHeight: 460, frameRate: 10, frames: 8 },
     { key: 'lab_tool_water', anim: 'lab_tool_water', path: 'player_water_sheet_unified.png?v=style-lab-v3', frameWidth: 320, frameHeight: 460, frameRate: 10, frames: 8 },

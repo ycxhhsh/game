@@ -8,7 +8,7 @@ export const LANDMARKS = {
     cottage: { x: 24 * TILE + 12, y: 9 * TILE + 42 },
     cottageDoor: { x: 24 * TILE + 12, y: 9 * TILE + 50 },
     heartTree: { x: 8 * TILE + 24, y: 9 * TILE + 22 },
-    grandma: { x: 25 * TILE + 24, y: 13 * TILE + 20 }
+    grandma: { x: 28 * TILE + 18, y: 19 * TILE + 36 }
 };
 
 export const LANDMARK_PROPS = [
